@@ -20,7 +20,8 @@ MUSIC_COMMANDS = (0x97, 0x98, 0x9B, 0x9D)
 EXCITER_CUTOFF_CONFLICT = (
     "Corte: protocolo V2.40 = 300–10000 Hz; "
     "header BP1048 exciter.h = 1000–10000 Hz. "
-    "Faixa da BP1032 ainda não validada."
+    "Operador relatou mínimo aparente de 1000 Hz no ACPWorkbench (BP1032 fw 0.3.0 / lib 2.24.0); "
+    "evidência reportada, faixa completa ainda não validada."
 )
 
 

@@ -2,7 +2,7 @@
 
 **BPControl** is an experimental, evidence-based controller toolkit for MVSilicon BP10xx DSP boards, initially targeting **BP1032** with the observed `HunXiang_F` firmware.
 
-> **Status: M1F physically verified for Windows Chorus wet WRITE/READBACK/RESTORE (2026-11-22); M1G editor prototype implemented, offline tested, pending physical validation.** Owner-reported success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads are also verified on the physical BP1032; CPU usage unit is MCPS as defined by the ACPWorkbench manual. This toolkit neither replaces DSP firmware nor processes audio.
+> **Status: M1F/M1H physically verified for Windows Chorus wet WRITE/READBACK/RESTORE; M1J Music FX Inspector physical reads validated on BP1032 (fw 0.3.0 / lib 2.24.0); M1K-A Exciter protocol evidence & offline staged prototype ready (no new live USB writes).** Owner-reported Chorus success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads and M1J Music reads (`0x97`, `0x98`, `0x9B`, `0x9D`) are verified on the physical BP1032; CPU usage unit is MCPS as defined by the ACPWorkbench manual. This toolkit neither replaces DSP firmware nor processes audio.
 
 ## Goals
 
@@ -508,42 +508,41 @@ write pathway. The compact evidence table remains available.
 See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
 
 
-## M1J — Music FX Inspector (new; hardware readback pending)
+## M1J — Music FX Inspector (physical reads validated)
 
-The user verified that the **Music-chain effects** affect USB Audio playback on
-the physical BP1032, making Music 3D, Music 3D Plus, Stereo Widener and
-Harmonic Exciter good candidates for direct listening tests.
+The operator physically validated the **M1J Music FX Inspector** on the BP1032
+(firmware `0.3.0`, effects library `2.24.0`): all four read-only Music-chain
+commands (**0x97, 0x98, 0x9B, 0x9D**) succeeded. The inspector remains strictly
+read-only (no device parameter writes, no automatic USB polling, no flash saves).
 
-M1J provides a **separate, read-only Music FX desktop inspector**, without
-changing the physical-tested Chorus editor. It uses the existing verified HID
-firmware gate to read four exact effect commands: **0x97, 0x98, 0x9B, 0x9D**.
-The widget displays saved-snapshot values or confirmed current USB
-readbacks, documentary ranges and ideas for listening. No device
-parameter writes, automatic USB polling, flash saves or firmware changes.
+The operator also observed in ACPWorkbench that Exciter's minimum `cutoff`
+appears to be **1000 Hz** (consistent with BP1048 SDK `exciter.h`, vs `300 Hz`
+in ACP V2.40). This is recorded as **reported physical evidence**, not proof
+of all bounds or other firmwares. See [docs/M1J_MUSIC_FX_INSPECTOR.md](docs/M1J_MUSIC_FX_INSPECTOR.md).
 
-The source review found that Stereo Widener has only **enable and
-binary shaping**, not a continuous width setting. The protocol
-V2.40 Exciter cutoff is 300–10000 Hz, but BP1048 exciter.h uses
-1000–10000 Hz. These nominal bounds are NOT yet validated on BP1032.
+## M1K-A — Harmonic Exciter (`0x9D`) Protocol Evidence (offline-only)
 
-First open OFFLINE (no USB):
+M1K-A prepares passive USBPcap protocol evidence and offline tooling for
+Harmonic Exciter (`0x9D`: `enable`, `cutoff`, `dry`, `wet`) **without enabling
+any new live USB writes** (Chorus wet `0x8F` field 6 remains the only writable
+control; `0x97`, `0x98`, `0x9B`, `0x9D` remain read-only on USB):
 
-    cd C:\progs\bpcontrol
-    git pull
-    py -m pip install -e .
-    py -m unittest discover -s tests -v
-    py tools/music_inspector_gui.py
+- Schema audit against ACP V2.40 §5.20.26 and BP1048 SDK (`src/bpcontrol/exciter_evidence.py`).
+- Offline PCAP analyzer (`tools/analyze_exciter_write_ack.py`) associating `SET_REPORT`,
+  `GET_REPORT`, ACK shape, and per-field readbacks with pre-write baseline and
+  restoration verification.
+- Offline-only staged Exciter editor prototype (`src/bpcontrol/exciter_editor.py`,
+  `tools/exciter_editor_gui.py`) with `EXCITER_LIVE_WRITE_ENABLED = False`, no
+  continuous sliders, and no USB/flash access.
 
-Then, with ACPWorkbench CLOSED and the BP1032 connected, manually
-enable the optional read-only inspection:
+Run the offline prototype (no USB):
 
-    py tools/music_inspector_gui.py --enable-live-reads
+    py tools/exciter_editor_gui.py
 
-Click **CONSULTAR 4 EFEITOS (USB)** exactly once. All four effects
-should report a current USB origin. The audio streaming/monitoring
-continues separately in Windows; this program is only an inspector,
-not an audio router. Share any readback output for the next safety gate.
+Capture passive ACPWorkbench Exciter changes in an **Administrator** PowerShell
+(with BPControl HID tools closed):
 
-**Physical Music-chain readback in M1J is still untested**; passing
-offline CI does not prove those new USB reads on the real board.
-See [docs/M1J_MUSIC_FX_INSPECTOR.md](docs/M1J_MUSIC_FX_INSPECTOR.md).
+    py tools/capture_usb_passive.py --scenario exciter-ack --seconds 90 --output artifacts/usb-capture/exciter-01.pcapng
+    py tools/analyze_exciter_write_ack.py artifacts/usb-capture/exciter-01.pcapng --output artifacts/usb-capture/exciter-01-ack.json
+
+See [docs/M1K_A_EXCITER_PROTOCOL_EVIDENCE.md](docs/M1K_A_EXCITER_PROTOCOL_EVIDENCE.md).

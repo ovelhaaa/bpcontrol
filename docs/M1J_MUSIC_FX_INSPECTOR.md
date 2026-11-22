@@ -36,7 +36,10 @@ podem ter tipos e posições diferentes.
 - Harmonic Exciter: dry/wet 0 a 100%; cutoff tem **DIVERGÊNCIA**:
   protocolo V2.40 §5.20.26 diz 300 a 10000 Hz, enquanto o SDK BP1048
   exciter.h define mínimo de 1000 Hz e máximo de 10000 Hz.
-  Não atribuir um limite físico à BP1032 antes de comprovação.
+  O operador observou no ACPWorkbench (BP1032 fw 0.3.0 / lib 2.24.0) que o
+  cutoff mínimo aparentemente é **1000 Hz**, consistente com o SDK BP1048.
+  Manter como **evidência física reportada**, não como comprovação de todos
+  os limites ou de outros firmwares.
 
 Referências do SDK:
 - https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/MVsB1_Base_SDK/middleware/audio/inc/stereo_widener.h
@@ -110,12 +113,14 @@ comprovadas da implementação binária BP1032.
 
 ## Próxima etapa recomendada
 
-**M1J:** versão nova implementada e testada offline; aguardando
-a primeira confirmação das quatro leituras na BP1032 física.
+**M1J (validado fisicamente pelo operador em 2026-11-22):** as quatro
+leituras físicas somente leitura (`0x97`, `0x98`, `0x9B`, `0x9D`)
+funcionaram corretamente na BP1032 (fw 0.3.0 / effects lib 2.24.0).
 
-**M1K:** após validação física, capturar no USBPcap as alterações
-individuais do ACPWorkbench (intensity, shaping, dry/wet) e seus
-ACK/readbacks para avaliar um writer reversível por parâmetro.
+**M1K-A (em andamento):** capturar no USBPcap passivo as alterações
+isoladas do ACPWorkbench para o Harmonic Exciter (`0x9D`: `cutoff`, `dry`,
+`wet`) e seus ACK/readbacks offline antes de avaliar qualquer writer
+reversível. Ver [`M1K_A_EXCITER_PROTOCOL_EVIDENCE.md`](M1K_A_EXCITER_PROTOCOL_EVIDENCE.md).
 Não liberar escrita com base apenas em esquemas documentados.
 
 **Audio Lab futuro:** reprodução WAV, captura do retorno via USB,

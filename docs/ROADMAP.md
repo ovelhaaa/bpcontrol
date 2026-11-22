@@ -84,15 +84,24 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [ ] Review a distinct physical safety case and protocol rollback plan **before** any proposal to unlock Chorus rate writes. Three readbacks are not write/Undo or DSP acoustic validation.
 - [ ] Test the actual BP1032 PingPong max_delay/quality range before any write; the ms→samples conversion is evidenced only in the BP1048 sample firmware.
 
-## M1J — Music FX Inspector (offline-validated, physical reads pending)
+## M1J — Music FX Inspector (physical reads validated)
 - [x] Identify real BP1032 instances and commands: Music 3D 0x97, 3D Plus 0x98, Stereo Widener 0x9B, Harmonic Exciter 0x9D.
 - [x] Cross-check V2.40 nominal fields/ranges and BP1048 SDK headers. Stereo Widener has a binary shaping option, not a documented width slider; Exciter cutoff minimum differs (300 Hz protocol vs 1000 Hz SDK).
 - [x] Implement exact four-command firmware-gated read-only model and Windows worker with one-shot 15-second watchdog, no retries or arbitrary USB commands.
 - [x] Implement separate Tkinter Music FX Inspector with four effects, raw values from saved snapshot vs current USB read, source grades and listening notes, no hardware writes.
 - [x] Add offline fake/worker regression tests for fail-closed behavior and source provenance.
-- [ ] Operator runs read-only physical Music inspector and provides four-effect readback; **never claim validated live Music reads before this**.
+- [x] Operator ran read-only physical Music inspector on BP1032 (fw 0.3.0 / lib 2.24.0) and confirmed all four Music reads (`0x97`, `0x98`, `0x9B`, `0x9D`) worked properly (2026-11-22).
 - [ ] Music USB Audio Lab: WAV injection, capture, RMS/spectral/stereo comparison (no direct HID/audio coupling) after Music inspection.
 - [ ] Capture ACPWorkbench effect-parameter writes passively before proposing any parameter-level Music write/Undo.
+
+## M1K-A — Harmonic Exciter (`0x9D`) Protocol Evidence (offline-validated, passive capture pending)
+- [x] Record operator-reported ACPWorkbench observation that Exciter cutoff minimum appears to be 1000 Hz (consistent with BP1048 SDK `exciter.h`, vs 300 Hz in ACP V2.40) without treating it as universal proof across all bounds or firmwares.
+- [x] Audit Exciter (`0x9D`, index 29) schema against ACP V2.40 §5.20.26 and BP1048 SDK (`exciter.h`, `audio_effect.c`, `communication.c`) in `src/bpcontrol/exciter_evidence.py`.
+- [x] Add `--scenario exciter-ack` to `tools/capture_usb_passive.py` and document the PowerShell passive USBPcap procedure in `docs/M1K_A_EXCITER_PROTOCOL_EVIDENCE.md`.
+- [x] Implement offline PCAP analyzer (`tools/analyze_exciter_write_ack.py`) associating SET_REPORT, GET_REPORT, ACK, and readbacks per field with pre-write baseline and restoration verification.
+- [x] Add synthetic PCAP fixtures and unit tests (`tests/test_exciter_write_ack.py`) for isolated changes, missing ACKs, invalid packets, out-of-order responses, duplicates, and unconfirmed restoration.
+- [x] Implement offline-only staged Exciter editor prototype (`src/bpcontrol/exciter_editor.py`, `tools/exciter_editor_gui.py`) with `EXCITER_LIVE_WRITE_ENABLED = False`, no USB writes, no continuous sliders, and no flash saves.
+- [ ] Operator runs passive USBPcap capture (`--scenario exciter-ack`) for isolated ACPWorkbench cutoff/dry/wet changes and analyzes with `tools/analyze_exciter_write_ack.py`.
 
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
@@ -111,7 +120,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** The BP1032 owner's USB Audio routing test establishes an *audible Music processing path* through the Windows PC (does not imply Guitar/Mic processing from USB). M1I Chorus rate has three operator-observed raw/Hz display pairs and Chorus wet remains the only write-enabled control. **M1J introduces a dedicated Music FX Inspector**, intended for Music 3D (0x97), 3D Plus (0x98), Stereo Widener (0x9B) and Exciter (0x9D), using the known four read-only ACP commands and the exact firmware gate, with separate GUI and source-graded nominal ranges. Its new functionality has passed offline tests but the operator has not yet exercised the four live reads. The sample BP1048 SDK documents binary widener shaping and a different Exciter cutoff minimum (1000 vs 300 Hz in V2.40), so **all Music effect fields remain strictly read-only** until physical evidence and passive USB write captures. See [M1J_MUSIC_FX_INSPECTOR.md](M1J_MUSIC_FX_INSPECTOR.md).
+**Now:** The BP1032 owner's USB Audio routing test establishes an *audible Music processing path* through the Windows PC (does not imply Guitar/Mic processing from USB). M1I Chorus rate has three operator-observed raw/Hz display pairs and Chorus wet remains the **only** write-enabled control. **M1J Music FX Inspector is physically validated** on BP1032 (fw 0.3.0 / lib 2.24.0): all four read-only Music reads (`0x97`, `0x98`, `0x9B`, `0x9D`) succeeded, and the operator reported ACPWorkbench's Exciter minimum cutoff appears to be 1000 Hz (consistent with BP1048 SDK `exciter.h`, vs 300 Hz in V2.40; kept as reported evidence, not proof of all bounds/firmwares). **M1K-A** adds Exciter schema auditing, a passive USBPcap procedure, an offline PCAP analyzer (`tools/analyze_exciter_write_ack.py`), synthetic regression tests, and an offline-only staged Exciter editor prototype. **All Music effect fields remain strictly read-only on USB** until passive USBPcap write/ACK/readback evidence is captured and reviewed. See [M1J_MUSIC_FX_INSPECTOR.md](M1J_MUSIC_FX_INSPECTOR.md) and [M1K_A_EXCITER_PROTOCOL_EVIDENCE.md](M1K_A_EXCITER_PROTOCOL_EVIDENCE.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 

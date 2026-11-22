@@ -34,8 +34,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--interface')
     p.add_argument('--device', type=int)
-    p.add_argument('--seconds', type=int, default=30, choices=range(5, 61))
-    p.add_argument('--scenario', choices=('chorus-read', 'chorus-wet-ack'),
+    p.add_argument('--seconds', type=int, default=30, choices=range(5, 121))
+    p.add_argument('--scenario', choices=('chorus-read', 'chorus-wet-ack', 'exciter-ack'),
                    default='chorus-read',
                    help='print operator steps only; NEVER drives ACPWorkbench or sends ACP')
     p.add_argument('--output', required=True, type=Path)
@@ -66,6 +66,10 @@ def main():
         if args.scenario == 'chorus-wet-ack':
             print('OPERATOR: In ACPWorkbench, read current Chorus wet; adjust by ONE point, read back, restore original, read again.', flush=True)
             print('Do not save firmware/flash or alter other parameters. Capture tool only observes.', flush=True)
+        elif args.scenario == 'exciter-ack':
+            print('OPERATOR: In ACPWorkbench, open Music Exciter (0x9D) and read current values first (baseline).', flush=True)
+            print('Then perform ISOLATED single-field changes one at a time: cutoff -> readback -> restore -> readback; dry -> readback -> restore -> readback; wet -> readback -> restore -> readback.', flush=True)
+            print('Do NOT save to flash, update firmware, or alter other effects. Capture tool only observes.', flush=True)
         else:
             print('OPERATOR: Consult Guitar Chorus in ACPWorkbench now.', flush=True)
         deadline = time.monotonic() + args.seconds + 15
