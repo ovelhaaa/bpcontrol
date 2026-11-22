@@ -380,7 +380,6 @@ No automatic USB I/O on window startup. `Consultar Chorus (USB)`,
 confirmation. The write allowlist, ±1 restriction, worker deadline,
 recovery and no-flash policy are unchanged.
 
-**The M1H version of the GUI still needs operator acceptance on the
-physical board.** Physical M1G success is not proof of M1H UI behavior.
+**M1H accepted on the physical BP1032 (2026-11-22):** operator GUI history shows manual wet read 80, explicit Apply 80→81 with ACK/readback, Undo 81→80 with ACK/readback, then independent fresh read wet=80. This verifies the corrected layout and tested editing path; USB disconnect safety, other effect writes, and all DPI configurations remain unproven.
 
 See [`docs/M1H_INSPECTOR_UX.md`](docs/M1H_INSPECTOR_UX.md).
