@@ -35,13 +35,19 @@
         {
           "index": 3,
           "name": "modulation_rate",
-          "unit": "Hz (scaling unresolved)",
+          "unit": "Hz (operator-observed at one raw point only)",
           "scale": null,
           "manual_rate_divisor_candidate": 10,
-          "older_mapping_divisor_candidate": 100,
+          "bp1032_display_divisor_hypothesis": 100,
+          "bp1032_operator_observed_pair": {
+            "raw": 200,
+            "acpworkbench_display_hz": 2.0,
+            "date": "2026-11-22",
+            "evidence_note": "BPControl USB screenshot + operator report of ACPWorkbench value; only one paired point"
+          },
           "manual_documented_raw_range": [0, 100],
           "physical_baseline_raw": 200,
-          "evidence": "conflicting_sources",
+          "evidence": "single_physical_display_pair_vs_sdk",
           "writable_in_future_transport": false
         },
         {
