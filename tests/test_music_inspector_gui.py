@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 from tools.music_inspector_gui import (
-    load_snapshot, run_music_worker_once, TIMEOUT_S, MUSIC_WORKER,
+    load_snapshot, run_music_worker_once, TIMEOUT_S, WORKER,
 )
 
 
@@ -38,7 +38,7 @@ class MusicInspectorGuiTests(unittest.TestCase):
             observed = run_music_worker_once(python="safe-python")
         self.assertEqual(observed["status"], "MUSIC_READ_OK")
         command = runner.call_args.args[0]
-        self.assertEqual(command, ["safe-python", str(MUSIC_WORKER),
+        self.assertEqual(command, ["safe-python", str(WORKER),
                                    "--read-four-music-effects"])
         self.assertEqual(runner.call_args.kwargs["timeout"], TIMEOUT_S)
         self.assertNotIn("--apply", command)
