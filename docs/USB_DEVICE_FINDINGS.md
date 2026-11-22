@@ -52,7 +52,7 @@ For actual report lengths, report IDs, endpoint addresses and packet layouts, in
 - [x] Composite audio interface MI_00 recognized.
 - [x] Consumer-control HID collection MI_03 recognized.
 - [x] **Vendor-defined HID collection MI_04 recognized**.
-- [x] Manufacturer `MV-SILICON`, product `mvsilicon B1 usb audio`, release `0x0100`, collection `MI_04` usage page `0xFF00`, usage `0x55AA` confirmed via hidapi enumeration.\n- [ ] HID report capacities / actual descriptor and report IDs identified.
+- [x] Manufacturer `MV-SILICON`, product `mvsilicon B1 usb audio`, release `0x0100`, collection `MI_04` usage page `0xFF00`, usage `0x55AA` confirmed via hidapi enumeration.\n- [x] HIDP_CAPS Input/Output/Feature report capacities identified: 257/257/9 bytes.\n- [ ] Exact report descriptor, Report IDs and actual ACP USB encapsulation identified.
 - [ ] Verified USB ACP read transaction on MI_04.
 - [ ] PC read-only BPControl transport implemented.
 
@@ -80,3 +80,18 @@ py tools/inspect_hid_caps.py
 The second script uses Windows `HidD_GetPreparsedData` and `HidP_GetCaps`, opening the HID collection with desired access **zero**. It prints `InputReportByteLength`, `OutputReportByteLength` and `FeatureReportByteLength` without requesting or sending USB reports. This establishes **capacities**, not report IDs or the raw HID descriptor. Exact sizes, HID report IDs, endpoint transport, and ACP packet framing may require a passive ACPWorkbench USBPcap trace.
 
 Windows API reference: https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/hidpi/ns-hidpi-_hidp_caps
+
+## HID report capacities confirmed on the physical BP1032
+
+Owner-run `py tools/inspect_hid_caps.py` (Windows HIDP_CAPS query, metadata only):
+
+```text
+Collection #1: MV-SILICON / mvsilicon B1 usb audio
+UsagePage               : 0xFF00
+Usage                   : 0x55AA
+InputReportByteLength   : 257
+OutputReportByteLength  : 257
+FeatureReportByteLength : 9
+```
+
+Windows' report capacities include the report-ID position. Thus the maximum declared **data portion** is 256 bytes for Input/Output and 8 for Feature. This alone does not prove actual Report IDs, transfer method, padding, or that ACPWorkbench uses MI_04; inspect a **passive capture**. See [USB_HID_CAPTURE.md](USB_HID_CAPTURE.md).
