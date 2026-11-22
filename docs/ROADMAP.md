@@ -4,7 +4,7 @@
 
 The user's BP1032 board exposes **no accessible UART pins**. The working ACPWorkbench connection is through the board's USB interface. Therefore **USB is the primary control path**. Do not require soldering wires, hardware modifications, a firmware flash, or inaccessible UART/I2C connections as part of the MVP. If alternative interfaces are discovered later, treat them only as optional.
 
-The ACPWorkbench manual documents USB HID for PC communication, but the **actual VID/PID, HID interface, report ID, USB report length, endpoint, padding, and transport framing remain unverified** for this specific board. Do not claim raw application ACP frames can be sent to the USB device as-is.
+The ACPWorkbench manual documents USB HID for PC communication. **VID/PID `1235:0003`, vendor-defined HID `MI_04` and usage page/use `FF00:55AA` have now been confirmed on the physical board.** Actual HID report IDs, report sizes, endpoint transfer details, padding, and ACP framing at USB level remain unverified. Do not claim raw application ACP frames can be sent to the USB device as-is.
 
 ## M0 — ACP application protocol (offline)
 - [x] ACP encode/decode including signed 16-bit words.
@@ -14,8 +14,8 @@ The ACPWorkbench manual documents USB HID for PC communication, but the **actual
 - [ ] Correct Echo quality mode (0..2); reconcile Chorus rate scaling vs UI evidence.
 
 ## M1A — Windows USB discovery (read-only, no reflash)
-- [ ] Capture USB VID:PID, device/configuration/interface and HID descriptors using USBView, UsbTreeView, or Windows device information.
-- [ ] Identify whether device is USB composite (audio plus HID), which interface ACPWorkbench actually opens, and whether native Windows drivers already claim it.
+- [x] Capture USB VID:PID and enumerate composite interfaces: audio MI_00, consumer HID MI_03, vendor-defined HID MI_04.\n- [ ] Determine HIDP_CAPS report lengths for MI_04 with the non-transmitting `tools/inspect_hid_caps.py`.\n- [ ] Acquire detailed HID report descriptor, report IDs and endpoint information.
+- [x] Confirm USB composite with Microsoft HID driver and vendor-defined collection at `MI_04` (`usage_page 0xFF00`, `usage 0x55AA`).\n- [ ] Confirm by passive capture that ACPWorkbench actually sends ACP traffic on MI_04.
 - [ ] Capture **one read-only ACPWorkbench transaction** with USBPcap/Wireshark if descriptors alone do not establish report IDs, padding and chunking.
 - [ ] Save sanitized descriptor and transaction fixtures. Avoid including other USB devices' unrelated/private traffic in the repository.
 - [ ] Implement a read-only PC transport after the above is verified: request firmware info `0x00`, system status `0x02`, then one mapped effect read.
@@ -43,6 +43,6 @@ The ACPWorkbench manual documents USB HID for PC communication, but the **actual
 
 ## Evidence gate
 
-**Now:** ACP application-layer traffic is known; USB report transport is not. The next concrete input is a USB descriptor capture (VID/PID, interfaces, endpoints, HID report descriptor) from the device connected to Windows.
+**Now:** ACP application-layer traffic and the likely HID interface MI_04 are known; USB report transport is not. Next input: HIDP_CAPS lengths for MI_04 via `py tools/inspect_hid_caps.py`, then a passive single-read ACPWorkbench capture to establish report framing.
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
