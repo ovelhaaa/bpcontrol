@@ -29,11 +29,27 @@ def main() -> int:
 
     if args._worker is not None:
         from bpcontrol.usb_read_only import read_info_once
+        from bpcontrol.device_info import parse_firmware_info, parse_system_status
+
         command = WORKER_COMMANDS[args._worker]
         reply = read_info_once(command)
         print(f"READ OK: {args._worker} command=0x{command:02X}")
         print("raw_payload_hex: " + reply.payload.hex(" ").upper())
         print("payload_bytes: " + str(len(reply.payload)))
+        if command == 0x00:
+            info = parse_firmware_info(reply)
+            print(f"firmware_type: 0x{info.type_code:02X} ({info.family})")
+            print(f"firmware_version: {info.firmware_version}")
+            print(f"effects_library_version: {info.effects_library_version}")
+        else:
+            state = parse_system_status(reply)
+            print(f"memory_used_kb: {state.memory_kb}")
+            print(f"memory_max_kb: {state.memory_max_kb}")
+            if state.memory_percent is not None:
+                print(f"memory_usage_percent: {state.memory_percent:.1f}")
+            print(f"cpu_usage_raw: {state.cpu_usage_raw} (unit unspecified by V2.40.0)")
+            print(f"cpu_max_frequency_mhz: {state.cpu_max_mhz}")
+            print(f"external_parameter_change: {int(state.external_parameter_change)}")
         return 0
 
     mode = "firmware" if args.live_read_firmware else (
