@@ -71,3 +71,21 @@ The PCAP proves ACPWorkbench's USB behavior but does **not** prove these exact W
 References:
 - [Microsoft HidD_SetOutputReport](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/hidsdi/nf-hidsdi-hidd_setoutputreport)
 - [Microsoft HidD_GetInputReport](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/hidsdi/nf-hidsdi-hidd_getinputreport)
+
+## Live read success — 2026-11-22
+
+The owner ran `py tools/read_chorus_windows.py --live-read-chorus` against
+the physical BP1032, with ACPWorkbench closed, and reported:
+
+```text
+READ OK: 0x8F Guitar Chorus
+values: enable=1, delay_length=20, depth=10, rate_raw=200, feedback=50, dry=80, wet=80
+```
+
+This exactly matches the earlier passive Chorus PCAP readback fixture and
+confirms physical Windows HID SET_REPORT/GET_REPORT transport and parsing for
+this read. No parameter writes or save commands were issued. It does **not**
+yet prove other command handling or ESP32-S3 USB Host operation.
+
+Next stage is explicitly opt-in firmware and status reads; see
+`tools/read_info_windows.py`. No `0xFD` / `0xFE` operations are permitted.
