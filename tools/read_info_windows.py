@@ -47,7 +47,9 @@ def main() -> int:
             print(f"memory_max_kb: {state.memory_max_kb}")
             if state.memory_percent is not None:
                 print(f"memory_usage_percent: {state.memory_percent:.1f}")
-            print(f"cpu_usage_raw: {state.cpu_usage_raw} (unit unspecified by V2.40.0)")
+            print(f"cpu_usage_mcps: {state.cpu_mcps} (million cycles per second; ACPWorkbench manual §8.1)")
+            if state.cpu_percent_of_nominal_max is not None:
+                print(f"cpu_nominal_max_percent: {state.cpu_percent_of_nominal_max:.1f} (not instant CPU utilization)")
             print(f"cpu_max_frequency_mhz: {state.cpu_max_mhz}")
             print(f"external_parameter_change: {int(state.external_parameter_change)}")
         return 0
