@@ -12,7 +12,6 @@ are summarized, no device paths, serial numbers or unrelated payloads.
 """
 from __future__ import annotations
 
-from collections import Counter
 import argparse
 import json
 from pathlib import Path
@@ -148,6 +147,15 @@ def timeline(result: dict) -> dict:
         None if auto_wah_original is None or not wah_post else
         wah_post[-1]["auto_wah_field0_readback"] == auto_wah_original
     )
+    # The operator described text-field live updates:
+    # 80 -> 8 -> 81, then 81 -> 8 -> 80.
+    # A matching byte sequence is consistent with intermediate text edits,
+    # not proof of the UI's exact event handler.
+    observed_wet_sequence = [e["value_raw"] for e in chorus_writes]
+    transient_numeric_editing_plausible = (
+        original_wet == 80
+        and observed_wet_sequence == [8, 81, 81, 8, 80, 80]
+    )
     issues = []
     if len(chorus_writes) != 2:
         issues.append("Chorus wet was written more/fewer than the expected two times")
@@ -167,6 +175,7 @@ def timeline(result: dict) -> dict:
         "chorus_wet_writes": len(chorus_writes),
         "chorus_wet_values": [e["value_raw"] for e in chorus_writes],
         "chorus_wet_baseline": original_wet,
+        "intermediate_numeric_editing_plausible": transient_numeric_editing_plausible,
         "chorus_wet_outliers": outliers,
         "chorus_wet_restoration_readback": chorus["post_restore_readback_confirmed"],
         "auto_wah_field_writes": len(wah_writes),
@@ -212,6 +221,9 @@ def main() -> int:
               f"values: {activity['chorus_wet_values']}")
         print(f"Chorus baseline: {activity['chorus_wet_baseline']}; "
               f"out-of-±1 events: {activity['chorus_wet_outliers']}")
+        print(f"Intermediate text editing matches operator account: "
+              f"{activity['intermediate_numeric_editing_plausible']} "
+              "(hypothesis, not proof of UI event timing)")
         print(f"Chorus restored by readback: "
               f"{activity['chorus_wet_restoration_readback']}")
         print(f"Auto Wah writes: {activity['auto_wah_field_writes']}; "
