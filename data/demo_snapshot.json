@@ -1,0 +1,689 @@
+{
+  "format": "bpcontrol-snapshot-v1",
+  "source": "historical_readbacks_demo_not_live_snapshot",
+  "created_at_utc": "2026-11-22T00:00:00Z",
+  "complete": false,
+  "error": null,
+  "error_effect_index": null,
+  "device": {
+    "manufacturer": "MV-SILICON",
+    "product": "mvsilicon B1 usb audio",
+    "interface": "MI_04",
+    "firmware_type": "0x30",
+    "firmware_family": "BPxx AudioPlay SDK",
+    "firmware_version": "0.3.0",
+    "effects_library_version": "2.24.0"
+  },
+  "system": {
+    "memory_kb": 70,
+    "memory_max_kb": 320,
+    "memory_percent": 21.875,
+    "cpu_mcps": 26,
+    "cpu_max_mhz": 320,
+    "cpu_nominal_max_percent": 8.125,
+    "external_parameter_change": false
+  },
+  "effect_count_expected": 59,
+  "effect_count_read": 1,
+  "effects": [
+    {
+      "index": 1,
+      "command": "0x81",
+      "name": "Music:Music Noise Suppres",
+      "group": "Music",
+      "type_id": 5,
+      "type_name": "Noise_Suppressor_Expander",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 2,
+      "command": "0x82",
+      "name": "Mic:Mic Noise Suppressor",
+      "group": "Mic",
+      "type_id": 5,
+      "type_name": "Noise_Suppressor_Expander",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 3,
+      "command": "0x83",
+      "name": "Mic:Mic Freq Shifter",
+      "group": "Mic",
+      "type_id": 6,
+      "type_name": "Frequency_Shifter",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 4,
+      "command": "0x84",
+      "name": "Mic:Mic Howling Dector",
+      "group": "Mic",
+      "type_id": 7,
+      "type_name": "Howling_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 5,
+      "command": "0x85",
+      "name": "Mic:Mic Howling Fine",
+      "group": "Mic",
+      "type_id": 43,
+      "type_name": "Howling_Suppressor_Fine",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 6,
+      "command": "0x86",
+      "name": "Mic:Mic Pitch Shifter",
+      "group": "Mic",
+      "type_id": 9,
+      "type_name": "Pitch_Shifter",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 7,
+      "command": "0x87",
+      "name": "Mic:Mic Auto Tune",
+      "group": "Mic",
+      "type_id": 0,
+      "type_name": "Auto_Tune",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 8,
+      "command": "0x88",
+      "name": "Mic:Mic Voice Changer",
+      "group": "Mic",
+      "type_id": 14,
+      "type_name": "Voice_Changer",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 9,
+      "command": "0x89",
+      "name": "Mic:Mic Voice Changer Pro",
+      "group": "Mic",
+      "type_id": 19,
+      "type_name": "Voice_Changer_Pro",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 10,
+      "command": "0x8A",
+      "name": "Mic:Mic Echo",
+      "group": "Mic",
+      "type_id": 3,
+      "type_name": "ECHO",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 11,
+      "command": "0x8B",
+      "name": "Mic:Mic Reverb",
+      "group": "Mic",
+      "type_id": 10,
+      "type_name": "Reverb",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 12,
+      "command": "0x8C",
+      "name": "Mic:Mic Plate Reverb",
+      "group": "Mic",
+      "type_id": 17,
+      "type_name": "Plate_Reverb",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 13,
+      "command": "0x8D",
+      "name": "Mic:Mic Pro Reverb",
+      "group": "Mic",
+      "type_id": 18,
+      "type_name": "Pro_Reverb",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 14,
+      "command": "0x8E",
+      "name": "Guitar:PingPong",
+      "group": "Guitar",
+      "type_id": 29,
+      "type_name": "Ping_Pong",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 15,
+      "command": "0x8F",
+      "name": "Guitar:Chorus",
+      "group": "Guitar",
+      "type_id": 26,
+      "type_name": "Chorus",
+      "status": "ok",
+      "fields": [
+        {
+          "index": 0,
+          "signed": 1,
+          "unsigned": 1,
+          "name": "enable",
+          "unit": "bool",
+          "mapping": "write_readback",
+          "ini_hint": "enable"
+        },
+        {
+          "index": 1,
+          "signed": 20,
+          "unsigned": 20,
+          "name": "delay_length",
+          "unit": "ms",
+          "mapping": "write_readback",
+          "ini_hint": "delay_length"
+        },
+        {
+          "index": 2,
+          "signed": 10,
+          "unsigned": 10,
+          "name": "modulation_depth",
+          "unit": "ms",
+          "mapping": "write_readback",
+          "ini_hint": "modulation_depth"
+        },
+        {
+          "index": 3,
+          "signed": 200,
+          "unsigned": 200,
+          "name": "modulation_rate",
+          "unit": "centiHz",
+          "mapping": "write_readback",
+          "ini_hint": "modulation_rate"
+        },
+        {
+          "index": 4,
+          "signed": 50,
+          "unsigned": 50,
+          "name": "feedback",
+          "unit": "%",
+          "mapping": "write_readback",
+          "ini_hint": "feedback"
+        },
+        {
+          "index": 5,
+          "signed": 80,
+          "unsigned": 80,
+          "name": "dry",
+          "unit": "%",
+          "mapping": "write_readback",
+          "ini_hint": "dry"
+        },
+        {
+          "index": 6,
+          "signed": 80,
+          "unsigned": 80,
+          "name": "wet",
+          "unit": "%",
+          "mapping": "write_readback",
+          "ini_hint": "wet"
+        }
+      ],
+      "raw_payload_hex": "FF 01 00 14 00 0A 00 C8 00 32 00 50 00 50 00",
+      "schema_match": true,
+      "ini_hint_count": 7,
+      "observed_field_count": 7
+    },
+    {
+      "index": 16,
+      "command": "0x90",
+      "name": "Guitar:Auto Wah",
+      "group": "Guitar",
+      "type_id": 27,
+      "type_name": "Auto_Wah",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 17,
+      "command": "0x91",
+      "name": "Mic:Mic Silence Dector",
+      "group": "Mic",
+      "type_id": 11,
+      "type_name": "SilenceDetector",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 18,
+      "command": "0x92",
+      "name": "Music:Low Level Compresso",
+      "group": "Music",
+      "type_id": 42,
+      "type_name": "Low_Level_Compressor",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 19,
+      "command": "0x93",
+      "name": "Music:Compander",
+      "group": "Music",
+      "type_id": 41,
+      "type_name": "Compander",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 20,
+      "command": "0x94",
+      "name": "Music:Pitch Shifter Pro",
+      "group": "Music",
+      "type_id": 22,
+      "type_name": "Pitch_Shifter_Pro",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 21,
+      "command": "0x95",
+      "name": "Music:Music Voice Cut",
+      "group": "Music",
+      "type_id": 16,
+      "type_name": "Vocal_Cut",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 22,
+      "command": "0x96",
+      "name": "Music:Music Voice Remove",
+      "group": "Music",
+      "type_id": 21,
+      "type_name": "Vocal_Remover",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 23,
+      "command": "0x97",
+      "name": "Music:Music 3D",
+      "group": "Music",
+      "type_id": 12,
+      "type_name": "MV3D",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 24,
+      "command": "0x98",
+      "name": "Music:Music 3D Plus",
+      "group": "Music",
+      "type_id": 30,
+      "type_name": "MV3D_Plus",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 25,
+      "command": "0x99",
+      "name": "Music:Music VB",
+      "group": "Music",
+      "type_id": 13,
+      "type_name": "MVBass",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 26,
+      "command": "0x9A",
+      "name": "Music:Music VB Classic",
+      "group": "Music",
+      "type_id": 23,
+      "type_name": "MVBass_Classic",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 27,
+      "command": "0x9B",
+      "name": "Music:Music Stereo Winden",
+      "group": "Music",
+      "type_id": 28,
+      "type_name": "Stereo_Widener",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 28,
+      "command": "0x9C",
+      "name": "Music:Music Delay",
+      "group": "Music",
+      "type_id": 24,
+      "type_name": "PCM_Delay",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 29,
+      "command": "0x9D",
+      "name": "Music:Music Exciter",
+      "group": "Music",
+      "type_id": 25,
+      "type_name": "Harmonic_Exciter",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 30,
+      "command": "0x9E",
+      "name": "Music:Music Phase",
+      "group": "Music",
+      "type_id": 20,
+      "type_name": "Phase_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 31,
+      "command": "0x9F",
+      "name": "Music:Music Drc",
+      "group": "Music",
+      "type_id": 2,
+      "type_name": "DRC",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 32,
+      "command": "0xA0",
+      "name": "Mic:Mic Drc",
+      "group": "Mic",
+      "type_id": 2,
+      "type_name": "DRC",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 33,
+      "command": "0xA1",
+      "name": "Rec:Rec Drc",
+      "group": "Rec",
+      "type_id": 2,
+      "type_name": "DRC",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 34,
+      "command": "0xA2",
+      "name": "Music:Music Pre Eq",
+      "group": "Music",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 35,
+      "command": "0xA3",
+      "name": "Music:Music Out Eq",
+      "group": "Music",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 36,
+      "command": "0xA4",
+      "name": "Mic:Mic Pre Eq",
+      "group": "Mic",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 37,
+      "command": "0xA5",
+      "name": "Mic:Mic Bypass Eq",
+      "group": "Mic",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 38,
+      "command": "0xA6",
+      "name": "Mic:Mic Echo Eq",
+      "group": "Mic",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 39,
+      "command": "0xA7",
+      "name": "Mic:Mic Reverb Eq",
+      "group": "Mic",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 40,
+      "command": "0xA8",
+      "name": "Mic:Mic Out Eq",
+      "group": "Mic",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 41,
+      "command": "0xA9",
+      "name": "Rec:Rec Out EQ",
+      "group": "Rec",
+      "type_id": 4,
+      "type_name": "EQ",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 42,
+      "command": "0xAA",
+      "name": "Music:Music Eq Drc",
+      "group": "Music",
+      "type_id": 37,
+      "type_name": "EQ_DRC",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 43,
+      "command": "0xAB",
+      "name": "Rec:Rec Eq Drc",
+      "group": "Rec",
+      "type_id": 37,
+      "type_name": "EQ_DRC",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 44,
+      "command": "0xAC",
+      "name": "Music:Music Out Gain",
+      "group": "Music",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 45,
+      "command": "0xAD",
+      "name": "Mic:Mic Bypass Gain",
+      "group": "Mic",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 46,
+      "command": "0xAE",
+      "name": "Mic:Mic Echo Gain",
+      "group": "Mic",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 47,
+      "command": "0xAF",
+      "name": "Mic:Mic Reverb Gain",
+      "group": "Mic",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 48,
+      "command": "0xB0",
+      "name": "Mic:Mic Out Gain",
+      "group": "Mic",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 49,
+      "command": "0xB1",
+      "name": "Rec:Rec Bypass Gain",
+      "group": "Rec",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 50,
+      "command": "0xB2",
+      "name": "Rec:Rec Effect Gain",
+      "group": "Rec",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 51,
+      "command": "0xB3",
+      "name": "Rec:Rec Music Gain",
+      "group": "Rec",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 52,
+      "command": "0xB4",
+      "name": "Rec:Rec Effect Remind Gai",
+      "group": "Rec",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 53,
+      "command": "0xB5",
+      "name": "Other:Usb Out Gain",
+      "group": "Other",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 54,
+      "command": "0xB6",
+      "name": "Other:Key Remind Gain",
+      "group": "Other",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 55,
+      "command": "0xB7",
+      "name": "Other:Effect Remind Gain",
+      "group": "Other",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 56,
+      "command": "0xB8",
+      "name": "Music:I2s In Gain",
+      "group": "Music",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 57,
+      "command": "0xB9",
+      "name": "Music:Bt In Gain",
+      "group": "Music",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 58,
+      "command": "0xBA",
+      "name": "Music:Usb&Card In Gain",
+      "group": "Music",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    },
+    {
+      "index": 59,
+      "command": "0xBB",
+      "name": "Music:Spdif In Gain",
+      "group": "Music",
+      "type_id": 15,
+      "type_name": "Gain_Control",
+      "status": "unread",
+      "fields": []
+    }
+  ],
+  "notice": "DEMONSTRAÇÃO: combina três leituras históricas do usuário (firmware, status e Chorus) realizadas separadamente. Não é uma captura simultânea atual. Os 58 efeitos restantes estão marcados como NÃO LIDOS. Nenhum valor foi inventado."
+}
