@@ -76,7 +76,7 @@ CHORUS_FIELDS: tuple[ChorusField, ...] = (
     ChorusField(
         3, "modulation_rate", "Velocidade LFO", "Hz: ponto observado, curva pendente",
         "BP1032: par relatado pelo operador raw=200 (USB) ↔ 2,00 Hz (ACPWorkbench), consistente com raw/100 neste ponto. Manual/SDK BP1048: raw/10 (10=1,0Hz). IMPLEMENTAÇÕES DIVERGENTES.",
-        "Protocolo V2.40 §5.20.27: raw 0–100; firmware exemplo BP1048 redefine escrita >100 como 10; BP1032 retornou 200. Limites e linearidade da BP1032 NÃO validados.",
+        "Protocolo V2.40 §5.20.27: raw 0–100; firmware exemplo BP1048 redefine escrita >100 como 10; BP1032 retornou raw=200. Limites e linearidade da BP1032 NÃO validados.",
         "2026-11-22: captura BPControl M1I lê raw=200; ACPWorkbench mostra 2,00 Hz segundo operador. Sem ensaio de outro ponto.",
         ("docs/M1I_PHYSICAL_RATE_PAIR.md", "docs/M1I_PROTOCOL_SDK_CROSSCHECK.md", "ACPWorkbench-ENG.pdf §6.1.27", "Protocolo V2.40.0 §5.20.27", "bp1048_sdk_v0.1.12: chorus.h / communication.c", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
