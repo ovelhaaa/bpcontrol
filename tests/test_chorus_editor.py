@@ -170,6 +170,9 @@ class M1GEditorTests(unittest.TestCase):
             stdout=json.dumps({
                 "status": "APPLIED_VERIFIED",
                 "initial": list(BASE),
+                "target": 79,
+                "candidate_ack_valid": True,
+                "errors": [],
                 "applied_readback": list(BASE[:6]) + [79],
             }), stderr=""
         )
