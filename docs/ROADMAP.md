@@ -33,7 +33,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] User supplied complete M1D console output confirming 59/59 reads with 845 words and 0 structural errors/warnings.\n- [ ] Independently inspect the saved raw JSON when provided; continue to avoid automatic USB retries.
 - [ ] Robust reconnect handling and cancellation across UI workflows. Do not open ACPWorkbench simultaneously.
 
-## M1E — First write preparation (no live writes yet)\n- [x] Add offline-only Chorus wet ±1 proposal with strict live-snapshot audit gate and byte-exact rollback frames.\n- [x] Add regression tests refusing partial/corrupt snapshots or incompatible firmware.\n- [x] Implement passive USBPcap Chorus wet-write/ACK analyzer with baseline and post-restore readback checks; synthetic regression tests pass.\n- [ ] Collect one *physical* ACPWorkbench Chorus wet write/ACK capture with verified restoration; no BPControl parameter writes.\n- [ ] Implement narrowly whitelisted, operator-approved single write + readback + verified rollback only after ACK transport is confirmed.\n\n## M1B — Safe controls
+## M1E — First write preparation (no live writes yet)\n- [x] Add offline-only Chorus wet ±1 proposal with strict live-snapshot audit gate and byte-exact rollback frames.\n- [x] Add regression tests refusing partial/corrupt snapshots or incompatible firmware.\n- [x] Implement passive USBPcap Chorus wet-write/ACK analyzer with baseline and post-restore readback checks; synthetic regression tests pass.\n- [x] Operator reports physical Chorus wet write/ACK capture: 6/6 bare 0x8F ACKs, baseline 80 and final readback restoration. Intermediate 8/81 values match live typing in ACPWorkbench.\n- [x] Provide offline mixed Chorus/Auto Wah timeline for diagnostic review.\n- [ ] Confirm Auto Wah returned to intended state (operator observed toggling; readback not yet analyzed).\n- [ ] Implement narrowly whitelisted, operator-approved single write + readback + verified rollback only after ACK transport is confirmed.\n\n## M1B — Safe controls
 - [ ] Guarded, user-approved write on a known parameter, with readback verification, rollback to prior value and safe interruption behavior.
 - [ ] Never emit `0xFD` persist/save, `0xFE` firmware upgrade, factory reset or unknown/reserved writes in the default transport.
 - [ ] Acknowledge application-layer ACK is not proof of persistent configuration.
@@ -56,6 +56,10 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** the user-run M1D audit is **clean: 59/59 effects, 845 raw words, six matching schemas, zero count mismatches, zero audit errors and warnings**. This proves structural consistency only, not all parameter semantics. The offline M1E Chorus wet ±1 proposal is available; **no BPControl effect writes have been enabled**. Next evidence is one ACPWorkbench single-field write/ACK USBPcap capture, analyzed with `tools/analyze_chorus_write_ack.py` and verified restoration; see [M1E_USB_ACK_CAPTURE.md](M1E_USB_ACK_CAPTURE.md). See [M1E_FIRST_WRITE_PREPARATION.md](M1E_FIRST_WRITE_PREPARATION.md).
+**Now:** the user-run M1D audit is **clean: 59/59 effects, 845 raw words, six matching schemas, zero count mismatches, zero audit errors and warnings**. This proves structural consistency only, not all parameter semantics. The offline M1E Chorus wet ±1 proposal is available; **no BPControl effect writes have been enabled**. USB HID writing ACK evidence is now available from a physical ACPWorkbench capture (6/6 ACKs); see [M1E_USB_ACK_CAPTURE.md](M1E_USB_ACK_CAPTURE.md). See [M1E_FIRST_WRITE_PREPARATION.md](M1E_FIRST_WRITE_PREPARATION.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
+
+### UI rule learned from M1E
+
+ACPWorkbench appears to send intermediate values during text input: `80 -> 8 -> 81` and `81 -> 8 -> 80`, with duplicate transmissions. BPControl numeric fields must **stage uncommitted text locally**, validate it, and send a single intentional update only on explicit Apply/Enter. No live BPControl writer is activated by this finding.
