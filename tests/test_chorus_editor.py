@@ -202,6 +202,17 @@ class M1GEditorTests(unittest.TestCase):
             result = run_worker_once("apply", BASE, 79)
         self.assertEqual(result["status"], "STATE_UNCERTAIN")
 
+    def test_nonzero_exit_with_success_status_is_not_accepted(self):
+        bad = subprocess.CompletedProcess(
+            [], 5, json.dumps({
+                "status": "APPLIED_VERIFIED",
+                "applied_readback": list(BASE[:6]) + [79],
+            }), "unexpected exit"
+        )
+        with mock.patch("tools.chorus_editor_gui.subprocess.run", return_value=bad):
+            result = run_worker_once("apply", BASE, 79)
+        self.assertEqual(result["status"], "STATE_UNCERTAIN")
+
     def test_read_worker_is_never_given_write_flags(self):
         output = subprocess.CompletedProcess([], 0,
                                              json.dumps({"status":"READ_OK",
