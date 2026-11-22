@@ -4,7 +4,7 @@
 
 The user's BP1032 board exposes **no accessible UART pins**. The working ACPWorkbench connection is through the board's USB interface. Therefore **USB is the primary control path**. Do not require soldering wires, hardware modifications, a firmware flash, or inaccessible UART/I2C connections as part of the MVP. If alternative interfaces are discovered later, treat them only as optional.
 
-The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 control SET_REPORT Output and GET_REPORT Input, Report ID **0**, `wIndex=4`, `wLength=256`, ACP at offset 0, zero pad. Windows HIDP_CAPS buffers are 257 bytes including the ID slot. Actual Win32 transport implementation is available as a first experimental **one-shot read only**, not yet tested on this hardware.
+The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 control SET_REPORT Output and GET_REPORT Input, Report ID **0**, `wIndex=4`, `wLength=256`, ACP at offset 0, zero pad. Windows HIDP_CAPS buffers are 257 bytes including the ID slot. The one-shot Win32 HID Chorus read was **confirmed successful on the owner's physical BP1032** on 2026-11-22 (exact same seven fields as passive USBPcap capture). Firmware and status reads are newly implemented but not yet hardware-tested.
 
 ## M0 — ACP application protocol (offline)
 - [x] ACP encode/decode including signed 16-bit words.
@@ -14,11 +14,15 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [ ] Correct Echo quality mode (0..2); reconcile Chorus rate scaling vs UI evidence.
 
 ## M1A — Windows USB discovery (read-only, no reflash)
-- [x] Capture USB VID:PID and enumerate composite interfaces: audio MI_00, consumer HID MI_03, vendor-defined HID MI_04.\n- [x] Determine HIDP_CAPS capacities for MI_04: **Input 257, Output 257, Feature 9** bytes (report-ID slot included).\n- [ ] Acquire detailed HID report descriptor, report IDs and endpoint information.
-- [x] Confirm USB composite with Microsoft HID driver and vendor-defined collection at `MI_04` (`usage_page 0xFF00`, `usage 0x55AA`).\n- [x] Confirm by passive capture that ACPWorkbench sends ACP traffic on MI_04.
+- [x] Capture USB VID:PID and enumerate composite interfaces: audio MI_00, consumer HID MI_03, vendor-defined HID MI_04.
+- [x] Determine HIDP_CAPS capacities for MI_04: **Input 257, Output 257, Feature 9** bytes (report-ID slot included).
+- [ ] Acquire detailed HID report descriptor, report IDs and endpoint information.
+- [x] Confirm USB composite with Microsoft HID driver and vendor-defined collection at `MI_04` (`usage_page 0xFF00`, `usage 0x55AA`).
+- [x] Confirm by passive capture that ACPWorkbench sends ACP traffic on MI_04.
 - [x] Capture two complete Chorus reads via USBPcap; report and byte-exact fixtures in [USB_CAPTURE_REPORT.md](USB_CAPTURE_REPORT.md).
 - [ ] Save sanitized descriptor and transaction fixtures. Avoid including other USB devices' unrelated/private traffic in the repository.
-- [x] Implement tightly restricted experimental one-shot Windows MI_04 Chorus read + offline tests.\n- [ ] Verify actual one-shot call on the BP1032; then implement firmware `0x00` and status `0x02` reads.
+- [x] Implement tightly restricted experimental one-shot Windows MI_04 Chorus read + offline tests.
+- [x] Verify a real Windows one-shot Chorus read on BP1032: `[1,20,10,200,50,80,80]`.\n- [x] Implement opt-in, one-shot, no-retry firmware `0x00` and status `0x02` readers with offline tests.\n- [ ] Verify firmware and status reads on physical board, then decode measured status layout.
 - [ ] Timeouts, cancellation, reconnect detection, clear errors and test fakes. Do not open ACPWorkbench simultaneously.
 
 ## M1B — Safe controls
@@ -43,6 +47,6 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** passive report framing has been confirmed by owner-supplied USBPcap evidence and an experimental Windows HID reader exists. **Next input:** one owner-approved `py tools/read_chorus_windows.py --live-read-chorus` run with ACPWorkbench closed, followed by reviewing the output. No live verification yet.
+**Now:** physical Windows HID Chorus read is **verified**. Two newly prepared commands are still unverified: `py tools/read_info_windows.py --live-read-firmware` and `--live-read-status`, each a single, explicitly authorized READ. Interpret status bytes only after validating device response. Parameter writes remain disabled.
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
