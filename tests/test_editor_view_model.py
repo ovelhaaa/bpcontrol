@@ -7,7 +7,7 @@ import unittest
 from bpcontrol.editor_view_model import (
     GROUPS, assess_wet_draft, count_effects_by_group,
     display_value_origin, evidence_label, filter_effect_indices,
-    validate_success_reply,
+    validate_success_reply, stage_wet_step,
 )
 from bpcontrol.snapshot import read_catalog
 
@@ -68,6 +68,40 @@ class M1HViewModelTests(unittest.TestCase):
                 self.assertEqual(abs(state.delta), 1)
         for new in (0, 77, 78, 82, 100):
             self.assertFalse(assess_wet_draft(str(new), 80).can_apply)
+
+    def test_plus_minus_buttons_only_prepare_bounded_one_step(self):
+        self.assertEqual(stage_wet_step(80, -1), 79)
+        self.assertEqual(stage_wet_step(80, 1), 81)
+        self.assertEqual(stage_wet_step(0, 1), 1)
+        self.assertEqual(stage_wet_step(100, -1), 99)
+        for current, direction in (
+            (0, -1), (100, 1), (-1, 1), (101, -1),
+            (True, 1), (80, 0), (80, 2), (80, True),
+        ):
+            with self.subTest(current=current, direction=direction):
+                with self.assertRaises(ValueError):
+                    stage_wet_step(current, direction)
+        self.assertEqual(assess_wet_draft(str(stage_wet_step(80, -1)), 80).state,
+                         "ready")
+
+    def test_editor_controls_layout_is_above_expanding_table(self):
+        source = (
+            Path(__file__).resolve().parents[1] /
+            "tools" / "chorus_editor_gui.py"
+        ).read_text(encoding="utf-8")
+        # Contract: old M1H had a notebook expanding before the edit panel,
+        # so the Apply button disappeared on small/high-DPI windows.
+        self.assertIn('editor.pack(fill="x", pady=(8, 10), before=tablebox)', source)
+        self.assertIn('status.pack(anchor="w", pady=(7, 4), before=tablebox)', source)
+        self.assertIn('secondary_row, text="APLICAR NA PLACA"', source)
+        self.assertIn('editrow, text="−1"', source)
+        self.assertIn('editrow, text="+1"', source)
+        self.assertIn("stage_wet_step(manual_live[0][6], direction)", source)
+        draft_block = source.split("    def stage_clicked(direction: int):", 1)[1].split(
+            "    def cancel_clicked():", 1
+        )[0]
+        for forbidden in ("run_worker_once(", "run_operation(", "HidD_", "subprocess."):
+            self.assertNotIn(forbidden, draft_block)
 
     def test_read_worker_success_needs_real_seven_word_shape(self):
         valid = {"status": "READ_OK", "wet": 80, "fields": list(CHORUS)}
