@@ -4,7 +4,7 @@ Grounded in MVSilicon communication protocol V2.40.0:
 - 0x00 response: firmware family (u8), firmware semantic version (u8*3),
   effects library semantic version (u8*3).
 - 0x02 response: FF marker + memory usage (u16 LE, KB) + CPU usage (u16 LE,
-  unit unspecified in the specification) + external-change flag (u8) +
+  unit shown as MCPS by ACPWorkbench manual, section 8.1) + external-change flag (u8) +
   max CPU frequency (u16 LE, MHz) + max memory (u16 LE, KB).
 """
 from __future__ import annotations
@@ -38,6 +38,16 @@ class SystemStatus:
     @property
     def memory_percent(self) -> float | None:
         return 100.0 * self.memory_kb / self.memory_max_kb if self.memory_max_kb else None
+
+    @property
+    def cpu_mcps(self) -> int:
+        """ACPWorkbench manual 2.25.0 §8.1: mega cycles/second (NOT MIPS)."""
+        return self.cpu_usage_raw
+
+    @property
+    def cpu_percent_of_nominal_max(self) -> float | None:
+        """Ratio to max MHz, not guaranteed instant CPU utilization."""
+        return 100.0 * self.cpu_mcps / self.cpu_max_mhz if self.cpu_max_mhz else None
 
 
 def parse_firmware_info(frame: ACPFrame) -> FirmwareInfo:
