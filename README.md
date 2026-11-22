@@ -459,3 +459,23 @@ remain raw with a scale-pending message; the field3 write API remains
 disabled. Only Chorus wet field6 ±1 is writable on deliberate Apply.
 
 See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
+
+
+## BP1032 Chorus Rate — two display/USB observation pairs (2026-11-22)
+
+A second physical BPControl screenshot confirms **rate raw=1000** after
+ACPWorkbench was set to **10.0 Hz**, complementing an earlier
+**raw=200 ↔ 2.00 Hz** pair. Both observed display points correspond to
+**100 raw units per Hz** in this BP1032 host interface, whereas the
+BP1048 SDK's algorithm API describes a different `raw/10` scale.
+
+The M1I evidence inspector displays both observed values in Hz and
+labels all other raw values as a **linear-scale hypothesis**, not a
+validated calibration. Compact range summaries and a raw-only numeric
+column also address truncation seen in the Windows screenshot.
+
+There are **no new hardware writes**: the modulation-rate field remains
+strictly read-only, the only writable Chorus field remains wet (index6),
+and no `0xFD` flash-save or firmware command is enabled.
+
+See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
