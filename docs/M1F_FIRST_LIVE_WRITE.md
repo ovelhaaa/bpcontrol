@@ -122,8 +122,10 @@ presets, UI com edição ou port ESP32-S3.
 
 ## Evidência de validação
 
-A operação ao vivo do **novo** `probe_chorus_windows.py` ainda
-não foi executada na BP1032 pelo proprietário nesta etapa.
+A operação ao vivo do **novo** `probe_chorus_windows.py` foi executada
+com sucesso na BP1032 física pelo proprietário em 2026-11-22.
+O resultado validou o caminho de sucesso da M1F, mas não exercitou
+falhas USB, desconexões ou timeout na placa real.
 Os testes sintéticos cobrem:
 - empacotamento de byte-exato para candidato e restauração;
 - ACK HID de 257 bytes, ID0 e preenchimento esperado;
@@ -134,10 +136,65 @@ Os testes sintéticos cobrem:
 - alterações não esperadas em outros campos do Chorus;
 - apenas uma alteração candidata e uma restauração.
 
-A primeira confirmação real depende da saída do comando acima.
+A primeira confirmação real foi fornecida pelo proprietário; veja
+registro abaixo. Não repetir o ensaio só para produzir o mesmo resultado.
 
 Links de referência:
 - [`src/bpcontrol/usb_chorus_probe.py`](../src/bpcontrol/usb_chorus_probe.py)
 - [`tools/probe_chorus_windows.py`](../tools/probe_chorus_windows.py)
 - [`tests/test_chorus_probe.py`](../tests/test_chorus_probe.py)
 - [`M1E_USB_ACK_CAPTURE.md`](M1E_USB_ACK_CAPTURE.md)
+
+
+## Marco físico confirmado — `PASS_RESTORED` (2026-11-22)
+
+O proprietário executou, no Windows:
+
+```powershell
+py tools/probe_chorus_windows.py --live-chorus-probe --expect-wet 80 --authorize-one-temporary-write
+```
+
+Resultado do terminal:
+
+```json
+{
+  "status": "PASS_RESTORED",
+  "baseline": [1, 20, 10, 200, 50, 80, 80],
+  "candidate_wet": 79,
+  "candidate_readback": [1, 20, 10, 200, 50, 80, 79],
+  "restoration_readback": [1, 20, 10, 200, 50, 80, 80],
+  "candidate_ack_valid": true,
+  "restoration_ack_valid": true,
+  "restoration_verified": true,
+  "errors": []
+}
+```
+
+A execução de testes offline imediatamente anterior informou:
+
+```text
+Ran 84 tests in 0.448s
+OK
+```
+
+**Conclusão confirmada para o caminho de sucesso:**
+- Os sete campos do Chorus foram lidos antes da escrita.
+- O campo `wet` mudou de 80 para 79 e o readback confirmou o
+  valor modificado, sem alterações nos seis outros campos.
+- A restauração `wet=80` recebeu ACK válido.
+- O readback final confirmou **todos os sete campos** exatamente iguais
+  ao baseline inicial.
+- Nenhum comando de salvamento persistente foi emitido pelo programa.
+
+**Limites:** o teste não demonstra estabilidade sob desconexão física,
+concorrência com outros controladores, perdas de ACK, interrupção de
+processo ou edição contínua. Nessas situações a restauração permanece
+uma tentativa, não garantia de atomicidade. Não habilitar ainda
+escrita genérica dos 59 efeitos, atualização contínua de sliders ou
+gravação em flash.
+
+**Próximo passo recomendado:** M1G, editor de parâmetros inicialmente
+conservador, com rascunho local, botão Aplicar, validação semântica,
+readback, restauração em erro e escopo por parâmetro liberado
+individualmente. Não transformar a demonstração M1F em uma API genérica
+de escritas sem uma nova rodada de testes.
