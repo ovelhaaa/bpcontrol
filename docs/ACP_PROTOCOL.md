@@ -12,8 +12,8 @@ A5 5A CMD LEN [LEN bytes of payload] 16
 
 ## Known values
 - Pitch Shifter Pro: 70 => +7 semitones, 120 => +12.
-- **Chorus modulation rate has a scaling conflict, NOT a verified
-  conversion.** ACPWorkbench English manual §6.1.27 (PDF page 27)
+- **Chorus modulation rate has a cross-version scale conflict and only
+  one physical BP1032 display pairing; no globally verified conversion.** ACPWorkbench English manual §6.1.27 (PDF page 27)
   defines raw 2=0.2Hz, 10=1.0Hz, 100=10.0Hz and a 0..100 nominal raw
   range (0.1Hz steps). An earlier BPControl note interpreted raw
   100=1.00Hz (raw/100), and the physical BP1032 M1F baseline included
@@ -27,6 +27,14 @@ A5 5A CMD LEN [LEN bytes of payload] 16
   readback contained raw200. The observed value is not proof of
   raw/100 scaling or of identical/different firmware; do not write.
   See [M1I_PROTOCOL_SDK_CROSSCHECK.md](M1I_PROTOCOL_SDK_CROSSCHECK.md).
+- **BP1032 physical display observation (2026-11-22):** operator-provided
+  M1I screenshot shows *live USB raw=200* on Guitar Chorus field3,
+  and operator reports *ACPWorkbench displays 2.00 Hz* for that
+  parameter. This is **one paired display point**, consistent with
+  `raw/100` on the actual BP1032, not the **general conversion or
+  physical operating range**. The BP1048 SDK's `raw/10` refers to its
+  different documented algorithm/API. Rate remains **read-only**.
+  See [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
 - **Chorus nominal ranges per the manual (§6.1.27):** Delay Length
   1..25 ms; Modulation Depth 0..(delay_length−1) ms; Feedback 0..50%;
   Dry and Wet 0..100%. These are documentation-level limits, not
