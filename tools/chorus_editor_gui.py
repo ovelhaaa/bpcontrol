@@ -24,6 +24,7 @@ import sys
 import threading
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from bpcontrol.chorus_editor import parse_wet_draft, validate_editor_target
