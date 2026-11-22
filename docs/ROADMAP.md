@@ -84,6 +84,16 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [ ] Review a distinct physical safety case and protocol rollback plan **before** any proposal to unlock Chorus rate writes. Three readbacks are not write/Undo or DSP acoustic validation.
 - [ ] Test the actual BP1032 PingPong max_delay/quality range before any write; the ms→samples conversion is evidenced only in the BP1048 sample firmware.
 
+## M1J — Music FX Inspector (offline-validated, physical reads pending)
+- [x] Identify real BP1032 instances and commands: Music 3D 0x97, 3D Plus 0x98, Stereo Widener 0x9B, Harmonic Exciter 0x9D.
+- [x] Cross-check V2.40 nominal fields/ranges and BP1048 SDK headers. Stereo Widener has a binary shaping option, not a documented width slider; Exciter cutoff minimum differs (300 Hz protocol vs 1000 Hz SDK).
+- [x] Implement exact four-command firmware-gated read-only model and Windows worker with one-shot 15-second watchdog, no retries or arbitrary USB commands.
+- [x] Implement separate Tkinter Music FX Inspector with four effects, raw values from saved snapshot vs current USB read, source grades and listening notes, no hardware writes.
+- [x] Add offline fake/worker regression tests for fail-closed behavior and source provenance.
+- [ ] Operator runs read-only physical Music inspector and provides four-effect readback; **never claim validated live Music reads before this**.
+- [ ] Music USB Audio Lab: WAV injection, capture, RMS/spectral/stereo comparison (no direct HID/audio coupling) after Music inspection.
+- [ ] Capture ACPWorkbench effect-parameter writes passively before proposing any parameter-level Music write/Undo.
+
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
 - [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
@@ -101,7 +111,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** **M1I Chorus rate mapping has three operator-confirmed BP1032 USB display points**: ACPWorkbench 2.00 Hz ↔ raw200, 5.00 Hz ↔ raw500 (midpoint), and 10.00 Hz ↔ raw1000. All are consistent with 100 raw units per Hz for ACPWorkbench's presentation, unlike the BP1048 SDK's `raw/10`. These observations are **not** evidence of the full valid range, exact audio LFO frequency or BPControl write safety. The M1I read-only evidence tab now labels only observed points as verified and shows the actual latest USB raw in its heading, instead of a stale static calibration line. **Only Guitar Chorus field6 wet** remains writable with the existing ±1 guarded Apply/readback/Undo. **Rate field3 remains read-only.** See [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
+**Now:** The BP1032 owner's USB Audio routing test establishes an *audible Music processing path* through the Windows PC (does not imply Guitar/Mic processing from USB). M1I Chorus rate has three operator-observed raw/Hz display pairs and Chorus wet remains the only write-enabled control. **M1J introduces a dedicated Music FX Inspector**, intended for Music 3D (0x97), 3D Plus (0x98), Stereo Widener (0x9B) and Exciter (0x9D), using the known four read-only ACP commands and the exact firmware gate, with separate GUI and source-graded nominal ranges. Its new functionality has passed offline tests but the operator has not yet exercised the four live reads. The sample BP1048 SDK documents binary widener shaping and a different Exciter cutoff minimum (1000 vs 300 Hz in V2.40), so **all Music effect fields remain strictly read-only** until physical evidence and passive USB write captures. See [M1J_MUSIC_FX_INSPECTOR.md](M1J_MUSIC_FX_INSPECTOR.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
