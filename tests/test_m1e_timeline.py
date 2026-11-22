@@ -76,6 +76,7 @@ class MixedActivityTimelineTests(unittest.TestCase):
             result=timeline(analyze(p,2,1))
             self.assertEqual(result["chorus_wet_values"],[8,81,81,8,80,80])
             self.assertEqual(result["chorus_wet_baseline"],80)
+            self.assertTrue(result["intermediate_numeric_editing_plausible"])
             self.assertTrue(result["chorus_wet_restoration_readback"])
             self.assertEqual(result["auto_wah_field0_values"],[1,0])
             self.assertEqual(result["auto_wah_original_field0"],0)
