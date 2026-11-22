@@ -14,6 +14,10 @@ CHORUS_INDEX = 15
 CHORUS_FIELD_COUNT = 7
 CHORUS_PHYSICAL_BASELINE = (1, 20, 10, 200, 50, 80, 80)
 
+# Two operator-observed ACPWorkbench display / BPControl physical USB pairs.
+# Values at any other raw word are still an inferred (not measured) curve.
+RATE_OPERATOR_OBSERVED_HZ: dict[int, float] = {200: 2.0, 1000: 10.0}
+
 # The words below distinguish independently evidenced *identity*, live
 # readback, scale inference, range information and write permission.
 #
@@ -23,12 +27,12 @@ CHORUS_PHYSICAL_BASELINE = (1, 20, 10, 200, 50, 80, 80)
 # both document Chorus rate in TENTHS of Hz (raw 10=1.0 Hz).
 # The V2.40.0 host communication protocol §5.20.27 describes raw 0..100
 # and the BP1048 sample communication.c bounds a write >100 to raw=10.
-# Operator-reported paired comparison, 2026-11-22:
-# ACPWorkbench displays Chorus Rate 2.00 Hz on the BP1032 while
-# BPControl M1I USB readback shows raw=200 (field 3), screenshot provided.
-# This directly supports ONE display point, raw=200 <-> displayed 2.00Hz,
-# consistent with a candidate divisor of 100. It does not validate
-# that divisor at other raw values, nor the firmware's physical limits.
+# Operator-reported paired comparisons, 2026-11-22:
+# ACPWorkbench shows 2.00 Hz ↔ BPControl M1I physical USB raw=200.
+# ACPWorkbench was then explicitly set to 10.0 Hz, and BPControl M1I
+# physical USB readback showed raw=1000 (field 3), screenshot provided.
+# Two distinct display observations support raw/100 at those points,
+# but do NOT validate global linearity, range boundaries, or acoustics.
 # Physical baseline: docs/M1F_FIRST_LIVE_WRITE.md, complete 7-word read.
 # M1H write: docs/M1H_INSPECTOR_UX.md, wet 80 -> 81 -> 80.
 #
@@ -74,10 +78,10 @@ CHORUS_FIELDS: tuple[ChorusField, ...] = (
         ("src/bpcontrol/effects.py", "docs/OBSERVATIONS.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
-        3, "modulation_rate", "Velocidade LFO", "Hz: ponto observado, curva pendente",
-        "BP1032: par relatado pelo operador raw=200 (USB) ↔ 2,00 Hz (ACPWorkbench), consistente com raw/100 neste ponto. Manual/SDK BP1048: raw/10 (10=1,0Hz). IMPLEMENTAÇÕES DIVERGENTES.",
-        "Protocolo V2.40 §5.20.27: raw 0–100; firmware exemplo BP1048 redefine escrita >100 como 10; BP1032 retornou raw=200. Limites e linearidade da BP1032 NÃO validados.",
-        "2026-11-22: captura BPControl M1I lê raw=200; ACPWorkbench mostra 2,00 Hz segundo operador. Sem ensaio de outro ponto.",
+        3, "modulation_rate", "Velocidade LFO", "Hz: 2 pontos observados, curva inferida",
+        "BP1032: raw=200↔2,00 Hz e raw=1000↔10,00 Hz em duas leituras USB e valores ACPWorkbench relatados. Relação raw/100 consistente em ambos. SDK BP1048 documenta raw/10: sem equivalência com firmware BP1032.",
+        "Protocolo V2.40 §5.20.27: raw 0–100; exemplo BP1048 redefine escrita >100 para 10; BP1032 retornou raw=200 e raw=1000. Extremos, interpolação e linearidade global NÃO validados.",
+        "2026-11-22: prints M1I com raw=200/1000; operador informou ACPWorkbench 2,00/10,0 Hz. Os pontos são observações, não prova de limites.",
         ("docs/M1I_PHYSICAL_RATE_PAIR.md", "docs/M1I_PROTOCOL_SDK_CROSSCHECK.md", "ACPWorkbench-ENG.pdf §6.1.27", "Protocolo V2.40.0 §5.20.27", "bp1048_sdk_v0.1.12: chorus.h / communication.c", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
@@ -117,12 +121,13 @@ def read_only_approximation(index: int, raw: int) -> str:
     if type(raw) is not int or not -32768 <= raw <= 32767:
         raise ValueError("Expected a signed 16-bit raw Chorus word")
     if index == 3:
-        if raw == 200:
-            # Only exact, operator-reported pair: BP1032 USB raw=200
-            # and ACPWorkbench display=2.00Hz for the same Chorus state.
-            return "2,00 Hz · ponto observado na BP1032 (raw=200)"
-        # Do not extrapolate raw/100 from a single measured display point.
-        return "Escala BP1032 pendente · divisor 100 é hipótese fora de raw=200"
+        if raw in RATE_OPERATOR_OBSERVED_HZ:
+            display = f"{RATE_OPERATOR_OBSERVED_HZ[raw]:.2f}".replace(".", ",")
+            return f"{display} Hz · ponto observado na BP1032 (raw={raw})"
+        # Two distinct matching points support a candidate linear model.
+        # Do not claim an unobserved value, interpolation, range, or
+        # acoustic frequency is proven by the two display observations.
+        return "raw/100 · hipótese linear (fora dos 2 pontos observados)"
     return "Sem conversão independente validada"
 
 
