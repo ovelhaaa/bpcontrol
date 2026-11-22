@@ -506,3 +506,44 @@ values marked as an inferred conversion. The Rate field stays strictly
 write pathway. The compact evidence table remains available.
 
 See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
+
+
+## M1J — Music FX Inspector (new; hardware readback pending)
+
+The user verified that the **Music-chain effects** affect USB Audio playback on
+the physical BP1032, making Music 3D, Music 3D Plus, Stereo Widener and
+Harmonic Exciter good candidates for direct listening tests.
+
+M1J provides a **separate, read-only Music FX desktop inspector**, without
+changing the physical-tested Chorus editor. It uses the existing verified HID
+firmware gate to read four exact effect commands: **0x97, 0x98, 0x9B, 0x9D**.
+The widget displays saved-snapshot values or confirmed current USB
+readbacks, documentary ranges and ideas for listening. No device
+parameter writes, automatic USB polling, flash saves or firmware changes.
+
+The source review found that Stereo Widener has only **enable and
+binary shaping**, not a continuous width setting. The protocol
+V2.40 Exciter cutoff is 300–10000 Hz, but BP1048 exciter.h uses
+1000–10000 Hz. These nominal bounds are NOT yet validated on BP1032.
+
+First open OFFLINE (no USB):
+
+    cd C:\progs\bpcontrol
+    git pull
+    py -m pip install -e .
+    py -m unittest discover -s tests -v
+    py tools/music_inspector_gui.py
+
+Then, with ACPWorkbench CLOSED and the BP1032 connected, manually
+enable the optional read-only inspection:
+
+    py tools/music_inspector_gui.py --enable-live-reads
+
+Click **CONSULTAR 4 EFEITOS (USB)** exactly once. All four effects
+should report a current USB origin. The audio streaming/monitoring
+continues separately in Windows; this program is only an inspector,
+not an audio router. Share any readback output for the next safety gate.
+
+**Physical Music-chain readback in M1J is still untested**; passing
+offline CI does not prove those new USB reads on the real board.
+See [docs/M1J_MUSIC_FX_INSPECTOR.md](docs/M1J_MUSIC_FX_INSPECTOR.md).
