@@ -2,7 +2,7 @@
 
 **BPControl** is an experimental, evidence-based controller toolkit for MVSilicon BP10xx DSP boards, initially targeting **BP1032** with the observed `HunXiang_F` firmware.
 
-> **Status: M1A physically verified for Windows Chorus READ (2026-11-22).** Owner-reported success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads are newly implemented but not yet physically tested. This toolkit neither replaces DSP firmware nor processes audio.
+> **Status: M1A physically verified for Windows Chorus READ (2026-11-22).** Owner-reported success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads are also verified on the physical BP1032; CPU usage unit is MCPS as defined by the ACPWorkbench manual. This toolkit neither replaces DSP firmware nor processes audio.
 
 ## Goals
 
@@ -90,8 +90,7 @@ is not a substitute for testing the physical BP1032.
 
 ## M1A — Firmware/status one-shot probes (experimental)
 
-The physical Windows Chorus read succeeded; the live firmware and status
-queries have **not yet** been verified. See `src/bpcontrol/usb_read_only.py`.
+The physical Windows Chorus, firmware and status reads all succeeded. The decoding uses MVSilicon protocol v2.40.0 and ACPWorkbench manual §8.1 for MCPS. See `src/bpcontrol/usb_read_only.py`.
 The only permitted ACP requests are empty-payload `0x00` and `0x02`.
 They use the same Win32 HID Report ID 0 / EP0 scheme and 4-second subprocess
 limit as the successful Chorus reader. They print raw reply payload bytes
@@ -109,3 +108,7 @@ py tools/read_info_windows.py --live-read-status
 Both scripts have no device access by default, no ACP parameter writes, no
 flash persistence, no retries, and an explicit command allowlist. If either
 fails, retain the error output and do not automatically repeat.
+
+## M1A physical device status
+
+The owner verified all three read-only commands on 2026-11-22: Chorus `0x8F`, firmware `0x00`, and status `0x02`. Confirmed firmware `0.3.0`, effects library `2.24.0`, RAM `70/320 KB`, **CPU `26 MCPS`**. Manual §8.1 defines MCPS as *mega cycles per second*, not MIPS; relative to the reported 320 MHz maximum, 26 MCPS is 8.1% of nominal cycle capacity, **not a guaranteed instantaneous CPU-utilization metric**. See [M1_PHYSICAL_FIRMWARE_STATUS.md](docs/M1_PHYSICAL_FIRMWARE_STATUS.md).
