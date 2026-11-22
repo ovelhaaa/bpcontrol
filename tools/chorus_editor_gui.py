@@ -344,8 +344,8 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     for key, caption, width in (
         ("index", "#", 42),
         ("field", "Parâmetro", 190),
-        ("raw", "RAW atual", 85),
-        ("range", "Faixa documentada / observação", 290),
+        ("raw", "RAW", 85),
+        ("range", "Faixa documentada / observação", 325),
         ("permission", "Permissão", 190),
     ):
         evidence_tree.heading(key, text=caption)
@@ -523,16 +523,18 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             return
         rows = evidence_rows(effects[14], manual_live[0])
         evidence_heading.configure(
-            text="CHORUS · RATE 200 ↔ 2,00 Hz OBSERVADO · ESCALA GERAL PENDENTE",
+            text="CHORUS · RATE 200↔2,00 Hz E 1000↔10,00 Hz · ESCRITA BLOQUEADA",
         )
         for row in rows:
             raw = row["current_raw"]
-            value = f"{raw} ({row['current_origin']})" if raw is not None else "—"
+            # No long provenance text in the 85px numeric column.
+            # Full provenance and manual details remain in the detail pane.
+            value = str(raw) if raw is not None else "—"
             evidence_tree.insert(
                 "", "end", iid=str(row["index"]),
                 values=(
                     f"{row['index']:02d}", row["label"], value,
-                    row["range_evidence"], row["permission"],
+                    row["range_summary"], row["permission"],
                 ),
             )
         evidence_tree.selection_set("3")
