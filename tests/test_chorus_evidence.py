@@ -50,7 +50,7 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertIn("Protocolo V2.40", rate.range_evidence)
         self.assertIn("raw=200", rate.range_evidence)
         self.assertIn("10", rate.range_evidence)
-        self.assertIn("M1I_PROTOCOL_SDK_CROSSCHECK.md", rate.evidence_sources)
+        self.assertIn("docs/M1I_PROTOCOL_SDK_CROSSCHECK.md", rate.evidence_sources)
         self.assertFalse(rate.writable_now)
         self.assertEqual(rate.permission_label, "SOMENTE LEITURA")
         self.assertTrue(CHORUS_FIELDS[6].writable_now)
