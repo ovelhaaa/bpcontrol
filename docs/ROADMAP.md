@@ -43,7 +43,8 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Provide offline mixed Chorus/Auto Wah timeline for diagnostic review.
 - [x] Physical mixed-activity timeline confirms Auto Wah enable 0→1→0 with final full readback 0, same as pre-test.
 - [x] Implement M1F opt-in Windows-only one-step Chorus wet probe with 2 preflight readbacks, strict ACK, readback, one restoration attempt and 7-field verification; 84 offline tests passed and physical success verified.
-- [x] First physical M1F probe succeeded (2026-11-22): PASS_RESTORED, Chorus wet 80→79→80, both ACKs valid, all 7 fields identical after restoration; no flash save. See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).\n\n## M1B — Safe controls
+- [x] First physical M1F probe succeeded (2026-11-22): PASS_RESTORED, Chorus wet 80→79→80, both ACKs valid, all 7 fields identical after restoration; no flash save. See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).\n
+## M1B — Safe controls
 - [x] First guarded user-approved write on Chorus wet, with valid candidate readback and verified restoration on physical BP1032.
 - [ ] Expand to separately validated parameters only; handle disconnection, stale state, and cancellation failures conservatively.
 - [ ] Never emit `0xFD` persist/save, `0xFE` firmware upgrade, factory reset or unknown/reserved writes in the default transport.
@@ -53,9 +54,13 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 ## M1G — UI editing, staged not streaming
 - [x] Implement a desktop M1G prototype with 59-effect snapshot browser; Chorus wet numeric draft is local and typing/Backspace/focus changes never send ACP (offline tests passed).
 - [x] Apply only on explicit Enter/button plus user confirmation; integer 0..100, exactly ±1 per change, firmware and full 7-field double readback before write (offline tested).
-- [x] Implement one volatile single-shot edit with readback, separate user-approved Undo, and one attempted restoration on error; never flash save (offline tested).\n- [ ] Physically validate GUI-originated Apply and Undo on BP1032 (M1G not yet proven on hardware).
+- [x] Implement one volatile single-shot edit with readback, separate user-approved Undo, and one attempted restoration on error; never flash save (offline tested).
+- [x] Operator reports M1G Windows GUI worked on the physical BP1032 (2026-11-22); exact Apply/Undo terminal/readback traces were not supplied.
+- [ ] Collect explicit confirmation of GUI Apply and Undo readbacks before claiming the full physical write/undo workflow independently verified.
 - [x] Display every other field in read-only snapshot table, show mapping evidence and errors/uncertain-state lock.
-- [x] Exercise pure draft parsing, ±1 validation, full-state conflicts, lost ACK, failed rollback, drift, worker timeout and bad worker output with offline mocks.\n- [ ] Validate real GUI interactions and refine styling/UX after physical M1G acceptance.\n\n## M2 — UI and resource management
+- [x] Exercise pure draft parsing, ±1 validation, full-state conflicts, lost ACK, failed rollback, drift, worker timeout and bad worker output with offline mocks.
+- [ ] Refine styling/UX using operator feedback; retain staged edits and single-step scope.\n
+## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
 - [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
 - [ ] 0x02 system status telemetry (CPU and RAM) validated against ACPWorkbench.
@@ -72,7 +77,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** physical M1F first write/readback/restore PASSED. **M1G Windows desktop GUI is implemented and offline-tested but NOT YET physically validated**. It displays the 59-effect saved snapshot read-only, requires manual live Chorus read, stores all keyboard edits in a local draft, allows a confirmed explicit **±1 wet Apply**, rereads all seven fields for conflict detection, validates ACK/readback, and offers a separate confirm-to-Undo action. On errors it attempts one restore; if restoration cannot be confirmed, it locks new writes. There are no automatic USB reads on startup and no flash saves. See [M1G_GUI_EDITOR.md](M1G_GUI_EDITOR.md).
+**Now:** physical M1F first write/readback/restore PASSED. **M1G Windows desktop GUI is implemented, offline-tested and reported functional by the operator on the physical setup**. Exact per-button Apply/Undo readback evidence has not yet been shared. It displays the 59-effect saved snapshot read-only, requires manual live Chorus read, stores all keyboard edits in a local draft, allows a confirmed explicit **±1 wet Apply**, rereads all seven fields for conflict detection, validates ACK/readback, and offers a separate confirm-to-Undo action. On errors it attempts one restore; if restoration cannot be confirmed, it locks new writes. There are no automatic USB reads on startup and no flash saves. See [M1G_GUI_EDITOR.md](M1G_GUI_EDITOR.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
