@@ -307,31 +307,31 @@ identical seven-field readbacks.
 
 First review the interface with **NO USB activity**:
 
-\`\`\`powershell
+```powershell
 cd C:\progs\bpcontrol
 git pull
 py -m pip install -e .
 py -m unittest discover -s tests -v
 py tools/chorus_editor_gui.py
-\`\`\`
+```
 
 If the offline interface looks correct, with ACPWorkbench **closed** and
 audio muted or low, opt into manual USB reads and confirmation-gated edits:
 
-\`\`\`powershell
+```powershell
 py tools/chorus_editor_gui.py --enable-live-writes
-\`\`\`
+```
 
 Nothing is transmitted merely by opening the window. Click **Consultar
 Chorus (USB)**, type the one-point change, select **Aplicar**, and confirm.
-If \`APPLIED_VERIFIED\` appears, **Desfazer último Apply** is available as
+If `APPLIED_VERIFIED` appears, **Desfazer último Apply** is available as
 another deliberate one-step operation with readback. No flash save is sent.
 
-If \`STATE_UNCERTAIN\`, the GUI blocks further writes; after the child
+If `STATE_UNCERTAIN`, the GUI blocks further writes; after the child
 process has exited, inspect the state in ACPWorkbench. Do not blindly retry.
 
 **M1G GUI-originated physical writes have not yet been tested**. The
 previously verified M1F command-line write/restore should not be confused
 with validation of this new graphical workflow.
 
-See [\`docs/M1G_GUI_EDITOR.md\`](docs/M1G_GUI_EDITOR.md) for safety and tests.
+See [`docs/M1G_GUI_EDITOR.md`](docs/M1G_GUI_EDITOR.md) for safety and tests.
