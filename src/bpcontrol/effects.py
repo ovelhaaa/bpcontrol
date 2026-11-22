@@ -41,9 +41,18 @@ def P(index: int, name: str, unit: str = "raw",
 
 EFFECTS = {
     "guitar_chorus": Effect(15, "Guitar Chorus", (
-        P(0, "enable", "bool"), P(1, "delay_length", "ms"),
-        P(2, "modulation_depth", "ms"), P(3, "modulation_rate", "centiHz"),
-        P(4, "feedback", "%"), P(5, "dry", "%"), P(6, "wet", "%"),
+        # ACPWorkbench §6.1.27 documents nominal ranges for these
+        # parameters. Those ranges alone do NOT authorize hardware writes.
+        P(0, "enable", "bool", writable=False),
+        P(1, "delay_length", "ms", writable=False),
+        P(2, "modulation_depth", "ms", writable=False),
+        # Scale conflict: ACPWorkbench manual raw/10 Hz; prior BPControl
+        # observation raw/100 Hz; physical 200 exceeds manual 0..100.
+        # Preserve the RAW integer; do not falsely label centiHz.
+        P(3, "modulation_rate", "raw", "inferred", False),
+        P(4, "feedback", "%", writable=False),
+        P(5, "dry", "%", writable=False),
+        P(6, "wet", "%"),
     )),
     "mic_echo": Effect(10, "Mic Echo", (
         P(0, "enable", "bool"), P(1, "cutoff", "Hz"),
