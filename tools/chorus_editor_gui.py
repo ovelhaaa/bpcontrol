@@ -375,15 +375,16 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         font=("Segoe UI", 11, "bold"), padx=12, pady=8, cursor="hand2",
     )
     plus_btn.pack(side="left", padx=(0, 10))
+    # Keep the prominent Apply button in a separate row: it must remain
+    # visible even on compact screens or Windows 125–150% display scaling.
+    secondary_row = tk.Frame(editor, bg=PANEL)
+    secondary_row.pack(fill="x", pady=(4, 2))
     apply_btn = tk.Button(
-        editrow, text="APLICAR NA PLACA", bg=ORANGE, fg="white", relief="flat",
+        secondary_row, text="APLICAR NA PLACA", bg=ORANGE, fg="white", relief="flat",
         activebackground="#D7521B", activeforeground="white",
         font=("Segoe UI", 10, "bold"), padx=13, pady=11, cursor="hand2",
     )
-    apply_btn.pack(side="left")
-
-    secondary_row = tk.Frame(editor, bg=PANEL)
-    secondary_row.pack(fill="x", pady=(4, 2))
+    apply_btn.pack(side="left", padx=(0, 10))
     undo_btn = tk.Button(
         secondary_row, text="Desfazer último Apply", bg="#3B3C3B", fg="white",
         relief="flat", padx=12, pady=7, cursor="hand2",
