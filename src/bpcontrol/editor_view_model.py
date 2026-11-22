@@ -99,3 +99,53 @@ def assess_wet_draft(draft: str, live_wet: int | None) -> DraftView:
 def display_value_origin(effect_index: int, live_values: tuple[int, ...] | None) -> str:
     """Never imply the 59-effect snapshot is real-time live data."""
     return "USB / leitura atual" if effect_index == 15 and live_values else "Snapshot salvo"
+
+
+def validate_success_reply(
+    mode: str, payload: dict, expected: tuple[int, ...] | None = None,
+    target: int | None = None,
+) -> None:
+    """Fail closed on malformed or self-contradictory HID success replies.
+
+    All seven fields are checked for single-step Apply. This is a *UI
+    validation*, not independent hardware proof; the physical backend
+    remains responsible for ACK and readback.
+    """
+    from .chorus_editor import validate_editor_target
+
+    if not isinstance(payload, dict):
+        raise ValueError("worker reply must be a JSON object")
+    kind = payload.get("status")
+    if mode == "read":
+        if kind != "READ_OK":
+            raise ValueError("expected READ_OK")
+        fields = payload.get("fields")
+        if not isinstance(fields, list) or len(fields) != 7:
+            raise ValueError("read reply requires exactly seven fields")
+        if any(type(v) is not int or not -32768 <= v <= 32767 for v in fields):
+            raise ValueError("read reply contains non-integer field")
+        if not 0 <= fields[6] <= 100:
+            raise ValueError("wet readback outside 0..100")
+        if payload.get("wet") is not None and payload.get("wet") != fields[6]:
+            raise ValueError("wet summary contradicts full readback")
+    elif mode == "apply":
+        if kind != "APPLIED_VERIFIED":
+            raise ValueError("expected APPLIED_VERIFIED")
+        validate_editor_target(expected, target)
+        baseline = payload.get("initial")
+        final = payload.get("applied_readback")
+        if (not isinstance(baseline, list) or not isinstance(final, list)
+                or len(baseline) != 7 or len(final) != 7):
+            raise ValueError("apply reply requires seven-field initial/final")
+        if tuple(baseline) != expected:
+            raise ValueError("apply reply baseline differs from requested state")
+        intended = list(expected)
+        intended[6] = target
+        if final != intended:
+            raise ValueError("apply reply differs from requested one-point target")
+        if (payload.get("target") != target
+                or payload.get("candidate_ack_valid") is not True
+                or payload.get("errors") not in ([], ())):
+            raise ValueError("apply reply lacks a clean ACK or matching target")
+    else:
+        raise ValueError("unknown worker operation")
