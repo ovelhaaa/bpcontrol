@@ -12,7 +12,7 @@ from bpcontrol.usb_chorus_probe import (
     ACK_REPORT, ChorusWetProbeSession, chorus_values,
     parse_wet_ack, plan_wet_step, run_one_probe,
 )
-from bpcontrol.usb_hid import HIDTransportError
+from bpcontrol.usb_hid import HIDTransportError, API_REPORT_SIZE
 
 
 class FakeProbe(ChorusWetProbeSession):
@@ -167,6 +167,41 @@ class ChorusProbeTests(unittest.TestCase):
         self.assertTrue(any("candidate" in err for err in result.error_messages))
         self.assertTrue(result.restoration_verified)
         self.assertEqual(fake.sent, [79, 80])
+
+    def test_actual_transport_emits_only_chorus_wet_field(self):
+        """Exercise the REAL ctypes buffer assembly with fake HID API calls."""
+        class FakeWindowsHid:
+            def __init__(self):
+                self.sent = []
+            def HidD_SetOutputReport(self, handle, out, size):
+                data = bytes(out)
+                if size != API_REPORT_SIZE:
+                    raise AssertionError("wrong Windows API report size")
+                self.sent.append(data)
+                return 1
+            def HidD_GetInputReport(self, handle, inp, size):
+                for i, value in enumerate(ACK_REPORT):
+                    inp[i] = value
+                return 1
+
+        session = ChorusWetProbeSession()
+        session._handle = 1234  # a fake handle; no __enter__ or USB access
+        session._firmware_ok = True  # mocked firmware gate
+        hid = FakeWindowsHid()
+        session._hiddll = hid
+        session.arm_from_fresh_read((1,20,10,200,50,80,80), 80)
+        session.send_candidate_once()
+        session.send_restoration_once()
+        self.assertEqual(len(hid.sent), 2)
+        self.assertEqual(
+            hid.sent[0][:9], bytes.fromhex("00 A5 5A 8F 03 06 4F 00 16")
+        )
+        self.assertEqual(
+            hid.sent[1][:9], bytes.fromhex("00 A5 5A 8F 03 06 50 00 16")
+        )
+        self.assertTrue(all(not any(data[9:]) for data in hid.sent))
+        for data in hid.sent:
+            self.assertEqual(len(data), API_REPORT_SIZE)
 
     def test_only_chorus_wet_field_is_used(self):
         fake = FakeProbe()
