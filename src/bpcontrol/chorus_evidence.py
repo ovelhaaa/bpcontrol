@@ -55,6 +55,19 @@ class ChorusField:
         return "Wet ±1 · autorização explícita" if self.writable_now else "SOMENTE LEITURA"
 
 
+# Compact table summaries; full source-rich descriptions appear
+# below the table on selection so long labels never overflow columns.
+CHORUS_TABLE_RANGE_HINTS: tuple[str, ...] = (
+    "Flag (schema)",
+    "1–25 ms · manual",
+    "0 até Delay−1 ms · manual",
+    "SDK raw 0–100; BP1032 raw 200/1000",
+    "0–50% · manual",
+    "0–100% · manual",
+    "0–100% · manual",
+)
+
+
 CHORUS_FIELDS: tuple[ChorusField, ...] = (
     ChorusField(
         0, "enable", "Ativação", "flag 0/1 (mapeamento)",
@@ -181,6 +194,7 @@ def evidence_rows(snapshot_effect: dict, live: tuple[int, ...] | None = None) ->
             "unit_hint": meta.unit_hint,
             "scale_evidence": meta.scale_evidence,
             "range_evidence": meta.range_evidence,
+            "range_summary": CHORUS_TABLE_RANGE_HINTS[meta.index],
             "raw_observation": meta.raw_observation,
             "approximation": (
                 read_only_approximation(meta.index, current)
