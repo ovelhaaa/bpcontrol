@@ -126,3 +126,66 @@ Arquivos:
 - [`tools/analyze_chorus_write_ack.py`](../tools/analyze_chorus_write_ack.py)
 - [`tests/test_chorus_write_ack.py`](../tests/test_chorus_write_ack.py)
 - [`M1E_FIRST_WRITE_PREPARATION.md`](M1E_FIRST_WRITE_PREPARATION.md)
+
+## Resultado físico informado — 2026-11-22
+
+O proprietário executou o analisador no arquivo local `chorus-wet-01.pcapng`
+e obteve:
+
+```text
+Found: 6 Chorus wet writes
+Bare padded 0x8F candidate ACKs: 6
+Other Chorus-field writes: 0
+SET packets: 695, 703, 711, 1287, 1295, 1315
+Wet values: 8, 81, 81, 8, 80, 80
+Pre-write baseline readback: 80
+Final write matches baseline: True
+Restoration readback in capture: True
+```
+
+A comunicação e o envelope USB de resposta foram confirmados: os seis
+`SET_REPORT` para `0x8F`/campo 6 produziram respostas `GET_REPORT`
+classificadas `bare_8f_zero_padded` (byte `8F` + 255 zeros).
+O Chorus retornou a `wet=80` no readback final.
+
+**Explicação adicional fornecida pelo operador:** o campo numérico do
+ACPWorkbench aparentemente transmite alterações intermediárias durante
+a digitação. Ao editar `80` para `81`, apagou o `0` (gerando `8`)
+e digitou `1` (gerando `81`). Na volta a `80`, apagou o `1`
+(gerando `8`) e digitou `0` (gerando `80`).
+Isso explica a ordem dos valores, inclusive duplicatas, sem precisar
+supor erro de transporte. **A explicação dos eventos de GUI é
+consistente com os dados, porém não é uma demonstração do mecanismo
+específico da interface.**
+
+O operador também ativou e desativou **Guitar Auto Wah** sem intenção
+durante a captura. Auto Wah usa instância `0x90`, separada de Chorus
+`0x8F`. A saída específica do analisador não comprova se o estado
+inicial do Auto Wah foi restaurado por readback, embora o usuário
+relate ter desativado o efeito novamente.
+
+### Análise adicional, sem nova captura
+
+```powershell
+git pull
+py tools/inspect_m1e_timeline.py artifacts/usb-capture/chorus-wet-01.pcapng
+```
+
+O script lista apenas transações Chorus/Auto Wah e informa se consegue
+comprovar o estado inicial/final do Auto Wah. Não realiza USB I/O.
+
+### Decisão de produto
+
+- Para caixas numéricas do **BPControl**, separar **rascunho de entrada**
+  e **valor confirmado no dispositivo**. Digitar/limpar números nunca
+  transmite ACP.
+- Exigir um único evento explícito de confirmação (Enter ou Aplicar).
+  Ao perder foco, cancelar ou reverter rascunho conforme regra de UI,
+  sem emissão implícita. Validar intervalo inteiro e comparar com
+  readback fresco antes de solicitar escrita.
+- Sliders físicos podem futuramente usar atualização limitada de taxa,
+  mas não pertencem ao primeiro ensaio M1F.
+- O resultado confirma o formato do ACK para essa placa/firmware; a
+  primeira implementação BPControl deve permanecer estritamente
+  limitada ao Chorus wet, com leitura inicial, confirmação, readback,
+  restauração e readback final, sem `0xFD`/`0xFE`.
