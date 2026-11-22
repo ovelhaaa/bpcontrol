@@ -35,6 +35,9 @@ def main():
     p.add_argument('--interface')
     p.add_argument('--device', type=int)
     p.add_argument('--seconds', type=int, default=30, choices=range(5, 61))
+    p.add_argument('--scenario', choices=('chorus-read', 'chorus-wet-ack'),
+                   default='chorus-read',
+                   help='print operator steps only; NEVER drives ACPWorkbench or sends ACP')
     p.add_argument('--output', required=True, type=Path)
     args = p.parse_args()
     interface, device = locate_board()
@@ -59,7 +62,12 @@ def main():
                                    '-i', '-', '-a', f'duration:{args.seconds}',
                                    '-w', str(args.output)], stdin=usb.stdout)
         usb.stdout.close()
-        print(f'CAPTURE: {args.interface} address {args.device}, {args.seconds}s. Consult Guitar Chorus in ACPWorkbench now.', flush=True)
+        print(f'CAPTURE: {args.interface} address {args.device}, {args.seconds}s.', flush=True)
+        if args.scenario == 'chorus-wet-ack':
+            print('OPERATOR: In ACPWorkbench, read current Chorus wet; adjust by ONE point, read back, restore original, read again.', flush=True)
+            print('Do not save firmware/flash or alter other parameters. Capture tool only observes.', flush=True)
+        else:
+            print('OPERATOR: Consult Guitar Chorus in ACPWorkbench now.', flush=True)
         deadline = time.monotonic() + args.seconds + 15
         while tshark.poll() is None:
             if usb.poll() is not None and usb.returncode != 0:
