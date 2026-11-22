@@ -29,6 +29,9 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from bpcontrol.chorus_editor import parse_wet_draft, validate_editor_target
+from bpcontrol.chorus_evidence import (
+    CHORUS_FIELDS, evidence_rows,
+)
 from bpcontrol.editor_view_model import (
     GROUPS, GROUP_LABELS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
     evidence_label, display_value_origin, validate_success_reply,
@@ -130,7 +133,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         raise RuntimeError("This Python installation has no tkinter/Tcl-Tk") from exc
 
     root = tk.Tk()
-    root.title("BPControl · M1H · Device Inspector")
+    root.title("BPControl · M1I · Chorus Evidence Inspector")
     root.geometry("1280x840")
     root.minsize(990, 670)
     root.configure(bg=BG)
@@ -179,7 +182,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
              bg=SIDEBAR, fg=ORANGE).place(x=20, y=16)
     tk.Label(left, text="CONTROL", font=("Segoe UI", 24, "bold"),
              bg=SIDEBAR, fg="#FAF5ED").place(x=57, y=16)
-    tk.Label(left, text="M1H  /  DEVICE INSPECTOR",
+    tk.Label(left, text="M1I  /  CHORUS EVIDENCE",
              bg=SIDEBAR, fg="#B6AEA2", font=("Segoe UI", 9)).place(x=23, y=67)
     search = tk.StringVar()
     find = tk.Entry(
@@ -274,7 +277,9 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     notebook.pack(fill="both", expand=True)
     tree_area = tk.Frame(notebook, bg=PANEL)
     activity_area = tk.Frame(notebook, bg=PANEL)
+    chorus_evidence_area = tk.Frame(notebook, bg=PANEL)
     notebook.add(tree_area, text="Parâmetros")
+    notebook.add(chorus_evidence_area, text="Chorus · Evidências")
     notebook.add(activity_area, text="Atividade da sessão")
     columns = ("field", "name", "value", "unit", "evidence", "origin")
     tree = ttk.Treeview(
@@ -320,6 +325,43 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         text="Histórico em memória · nenhum arquivo ou envio automático",
         bg=PANEL, fg=MUTED, font=("Segoe UI", 9),
     ).pack(side="right")
+
+    # M1I evidence inspector is PURELY READ-ONLY. The manual's nominal
+    # ranges and old schema metadata never enable an extra HID write.
+    evidence_heading = tk.Label(
+        chorus_evidence_area,
+        text="CHORUS · 7 CAMPOS · SOMENTE WET TEM ESCRITA HABILITADA",
+        bg=PANEL, fg=MUTED, font=("Segoe UI", 10, "bold"),
+    )
+    evidence_heading.pack(anchor="w", pady=(3, 7))
+    evidence_grid = tk.Frame(chorus_evidence_area, bg=PANEL)
+    evidence_grid.pack(fill="both", expand=True)
+    evidence_columns = ("index", "field", "raw", "range", "permission")
+    evidence_tree = ttk.Treeview(
+        evidence_grid, columns=evidence_columns, show="headings",
+        style="BP.Treeview", selectmode="browse", height=7,
+    )
+    for key, caption, width in (
+        ("index", "#", 42),
+        ("field", "Parâmetro", 190),
+        ("raw", "RAW atual", 85),
+        ("range", "Faixa documentada / observação", 290),
+        ("permission", "Permissão", 190),
+    ):
+        evidence_tree.heading(key, text=caption)
+        evidence_tree.column(key, width=width, stretch=(key=="range"))
+    evidence_scroll = ttk.Scrollbar(
+        evidence_grid, orient="vertical", command=evidence_tree.yview,
+    )
+    evidence_tree.configure(yscrollcommand=evidence_scroll.set)
+    evidence_scroll.pack(side="right", fill="y")
+    evidence_tree.pack(side="left", fill="both", expand=True)
+    evidence_details = tk.Text(
+        chorus_evidence_area, bg="#F1EBE1", fg=INK, font=("Segoe UI", 9),
+        relief="flat", borderwidth=0, height=7, wrap="word",
+        padx=10, pady=7, state="disabled",
+    )
+    evidence_details.pack(fill="x", pady=(7, 1))
 
     editor = tk.Frame(main, bg=PANEL, highlightthickness=1,
                       highlightbackground=LINE, padx=18, pady=14)
@@ -441,6 +483,61 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
 
     activity_copy.configure(command=copy_activity)
 
+    def show_evidence_details(message: str):
+        evidence_details.configure(state="normal")
+        evidence_details.delete("1.0", "end")
+        evidence_details.insert("1.0", message)
+        evidence_details.configure(state="disabled")
+
+    def evidence_selection(event=None):
+        selected_items = evidence_tree.selection()
+        if not selected_items:
+            return
+        index = int(selected_items[0])
+        meta = CHORUS_FIELDS[index]
+        message = (
+            f"{meta.label} · campo {meta.index:02d} · {meta.permission_label}\n"
+            f"Unidade/escala: {meta.unit_hint}\n"
+            f"Documentação: {meta.range_evidence}\n"
+            f"Confiança: {meta.scale_evidence}\n"
+            f"Medido: {meta.raw_observation}\n"
+            f"Fontes: {', '.join(meta.evidence_sources)}\n"
+            "AVISO: faixas do manual não liberam escritas nesta firmware."
+        )
+        show_evidence_details(message)
+
+    def refresh_chorus_evidence():
+        for item in evidence_tree.get_children():
+            evidence_tree.delete(item)
+        if selected[0] != 15:
+            evidence_heading.configure(
+                text="EVIDÊNCIAS DETALHADAS: SELECIONE GUITAR CHORUS",
+            )
+            show_evidence_details(
+                "Demais efeitos permanecem em leitura do snapshot. "
+                "Não existem permissões genéricas de escrita.",
+            )
+            return
+        rows = evidence_rows(effects[14], manual_live[0])
+        evidence_heading.configure(
+            text="CHORUS · FONTES: MANUAL/INI + LEITURA REAL · RATE EM CONFLITO",
+        )
+        for row in rows:
+            raw = row["current_raw"]
+            value = f"{raw} ({row['current_origin']})" if raw is not None else "—"
+            evidence_tree.insert(
+                "", "end", iid=str(row["index"]),
+                values=(
+                    f"{row['index']:02d}", row["label"], value,
+                    row["range_evidence"], row["permission"],
+                ),
+            )
+        evidence_tree.selection_set("3")
+        evidence_tree.see("3")
+        evidence_selection()
+
+    evidence_tree.bind("<<TreeviewSelect>>", evidence_selection)
+
     def effect_row():
         return effects[selected[0]-1]
 
@@ -475,6 +572,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
                 actual_value, f.get("unit", "raw"), evidence, source_label,
             ))
         refresh_editor_state()
+        refresh_chorus_evidence()
 
     def select_list(event=None):
         active = entries.curselection()
@@ -790,7 +888,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     root.protocol("WM_DELETE_WINDOW", close)
     filter_list()
     choose_effect(15)
-    record_event("INÍCIO", "M1H aberta · nenhum USB automático")
+    record_event("INÍCIO", "M1I aberta · nenhum USB automático")
     if not allow_live:
         set_status(
             "MODO OFFLINE: nenhuma ação USB disponível. Para habilitar leitura "
@@ -828,7 +926,7 @@ def main(argv=None) -> int:
         validate_snapshot_for_viewing(snapshot)
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         parser.error(f"invalid snapshot: {exc}")
-    print(f"BPControl M1H — snapshot {path}", flush=True)
+    print(f"BPControl M1I — snapshot {path}", flush=True)
     print(
         "MODE: MANUAL USB CHORUS WET ±1, no flash writes."
         if args.enable_live_writes else "MODE: OFFLINE / NO USB ACCESS.",
