@@ -156,3 +156,19 @@ Arquivos:
 - [`src/bpcontrol/chorus_editor.py`](../src/bpcontrol/chorus_editor.py)
 - [`tests/test_chorus_editor.py`](../tests/test_chorus_editor.py)
 - [`M1F_FIRST_LIVE_WRITE.md`](M1F_FIRST_LIVE_WRITE.md)
+
+
+## Feedback do operador (2026-11-22)
+
+O proprietário informou **“funcionou”** após executar a M1G.
+Registramos, portanto, que o protótipo gráfico funcionou no ambiente
+Windows com BP1032 conectado. Não foi anexado, nesta atualização,
+um log discriminando os resultados de **Consultar**, **Aplicar** e
+**Desfazer**, nem uma nova captura USBPcap. Evitar afirmar
+verificação independente de cada botão até receber essa evidência.
+
+O ensaio anterior **M1F** continua sendo a comprovação física
+detalhada disponível para a operação `wet 80→79→80`,
+com ACKs e readbacks. A próxima iteração deve melhorar
+usabilidade e instrumentação de status, preservando o escopo
+restrito de escrita e as salvaguardas de restauração.
