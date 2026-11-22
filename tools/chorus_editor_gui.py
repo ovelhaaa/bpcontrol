@@ -495,8 +495,11 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             return
         index = int(selected_items[0])
         meta = CHORUS_FIELDS[index]
+        reading = evidence_rows(effects[14], manual_live[0])[index]
         message = (
             f"{meta.label} · campo {meta.index:02d} · {meta.permission_label}\n"
+            f"Valor observado neste painel: {reading['current_raw']} ({reading['current_origin']})\n"
+            f"Conversão: {reading['approximation']}\n"
             f"Unidade/escala: {meta.unit_hint}\n"
             f"Documentação: {meta.range_evidence}\n"
             f"Confiança: {meta.scale_evidence}\n"
@@ -520,7 +523,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             return
         rows = evidence_rows(effects[14], manual_live[0])
         evidence_heading.configure(
-            text="CHORUS · FONTES: MANUAL/INI + LEITURA REAL · RATE EM CONFLITO",
+            text="CHORUS · RATE 200 ↔ 2,00 Hz OBSERVADO · ESCALA GERAL PENDENTE",
         )
         for row in rows:
             raw = row["current_raw"]
