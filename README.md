@@ -416,3 +416,24 @@ the unchanged, physically validated M1H backend, but they are not
 needed to review this new tab.
 
 See [`docs/M1I_CHORUS_MANUAL_RECONCILIATION.md`](docs/M1I_CHORUS_MANUAL_RECONCILIATION.md).
+
+## M1I source triangulation — V2.40.0, BP1048 SDK and ESP32
+
+A comparison of the owner-supplied **MVSilicon V2.40.0 ACP protocol**,
+the connected **[BP1048 SDK](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12)**,
+and [ESP32 DSP Core `release`](https://github.com/Ohminecraft/esp32-dsp-core/tree/release)
+has clarified two important points:
+
+- Chorus rate `raw/10` is documented for the **BP1048 SDK DSP API**;
+  its example firmware resets rate writes over 100 to 10. The physical
+  BP1032 was read at `raw=200`. That mismatch requires real device
+  investigation; **no new write permissions or definitive Hz conversion**.
+- PingPong's **ACP parameter is in milliseconds**, while the **DSP library
+  API takes samples**. The example firmware performs the ms→samples
+  conversion. The BPControl ACP schema retains milliseconds.
+
+The ESP32 adaptation is an independent DSP implementation, not a native
+USB HID/ACP client for the BP1032 and not the same proprietary firmware.
+
+Full provenance, source links, precautions and a safe read-only probe plan:
+[`docs/M1I_PROTOCOL_SDK_CROSSCHECK.md`](docs/M1I_PROTOCOL_SDK_CROSSCHECK.md).
