@@ -40,8 +40,10 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertIn("0–50%", CHORUS_FIELDS[4].range_evidence)
         self.assertIn("0–100%", CHORUS_FIELDS[5].range_evidence)
         self.assertIn("0–100%", CHORUS_FIELDS[6].range_evidence)
-        self.assertIn("raw 10=1,0Hz", CHORUS_FIELDS[3].scale_evidence)
-        self.assertIn("raw 100=1,0Hz", CHORUS_FIELDS[3].scale_evidence)
+        self.assertIn("raw=200", CHORUS_FIELDS[3].scale_evidence)
+        self.assertIn("2,00 Hz", CHORUS_FIELDS[3].scale_evidence)
+        self.assertIn("raw/100", CHORUS_FIELDS[3].scale_evidence)
+        self.assertIn("raw/10", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("raw=200", CHORUS_FIELDS[3].range_evidence)
 
     def test_sdk_evidence_is_not_physical_writing_authority(self):
@@ -51,16 +53,21 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertIn("raw=200", rate.range_evidence)
         self.assertIn("10", rate.range_evidence)
         self.assertIn("docs/M1I_PROTOCOL_SDK_CROSSCHECK.md", rate.evidence_sources)
+        self.assertIn("docs/M1I_PHYSICAL_RATE_PAIR.md", rate.evidence_sources)
         self.assertFalse(rate.writable_now)
         self.assertEqual(rate.permission_label, "SOMENTE LEITURA")
         self.assertTrue(CHORUS_FIELDS[6].writable_now)
 
-    def test_rate_conversion_is_never_claimed_as_proven(self):
-        for raw in (0, 10, 100, 200, -1):
+    def test_only_operator_observed_rate_pair_is_displayed_in_hz(self):
+        self.assertEqual(
+            read_only_approximation(3, 200),
+            "2,00 Hz · ponto observado na BP1032 (raw=200)",
+        )
+        for raw in (0, 10, 100, 199, 201, -1):
             with self.subTest(raw=raw):
                 result = read_only_approximation(3, raw)
-                self.assertIn("CONFLITO", result)
-                self.assertNotIn("1,00 Hz", result)
+                self.assertIn("pendente", result)
+                self.assertNotIn(" Hz", result)
         with self.assertRaises(ValueError):
             read_only_approximation(3, 32768)
         with self.assertRaises(ValueError):
@@ -71,7 +78,7 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertEqual(len(saved), 7)
         self.assertTrue(all(x["current_origin"] == "Snapshot salvo" for x in saved))
         self.assertEqual(saved[3]["current_raw"], 200)
-        self.assertIn("CONFLITO", saved[3]["approximation"])
+        self.assertIn("ponto observado", saved[3]["approximation"])
         live_values = (1, 20, 10, 200, 50, 80, 81)
         live = evidence_rows(self.record, live_values)
         self.assertEqual(live[6]["current_raw"], 81)
