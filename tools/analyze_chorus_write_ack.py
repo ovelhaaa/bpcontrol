@@ -177,8 +177,16 @@ def inspect(result: dict) -> dict:
     acknowledgement_count = sum(
         w["ack_classification"] == "bare_8f_zero_padded" for w in writes
     )
-    restored_values = (
-        len(writes) >= 2 and writes[-1]["value"] == writes[0]["value"]
+    # The original value is only known from a captured Chorus readback
+    # *before* the first wet write, not from the first write (which is
+    # normally the modified value). Refuse to infer it from write values.
+    baseline_reads = [
+        r for r in reads if writes and r["packets"][-1] < writes[0]["set_report_packet"]
+    ]
+    original_wet = baseline_reads[-1]["wet"] if baseline_reads else None
+    restored_command = (
+        None if original_wet is None or not writes
+        else writes[-1]["value"] == original_wet
     )
     last_write_end = (
         writes[-1].get("get_report_completion_packet", writes[-1]["set_report_packet"])
@@ -186,8 +194,8 @@ def inspect(result: dict) -> dict:
     )
     subsequent_reads = [r for r in reads if r["packets"][0] > last_write_end]
     restore_readback = (
-        bool(restored_values and subsequent_reads
-             and subsequent_reads[-1]["wet"] == writes[-1]["value"])
+        bool(restored_command is True and subsequent_reads
+             and subsequent_reads[-1]["wet"] == original_wet)
     )
     return {
         "format": "bpcontrol-chorus-write-ack-evidence-v1",
@@ -198,12 +206,14 @@ def inspect(result: dict) -> dict:
         "other_chorus_field_writes": other_chorus_writes,
         "writes": writes,
         "chorus_readbacks": reads,
-        "first_last_write_value_equal": bool(restored_values),
+        "baseline_wet_from_prewrite_readback": original_wet,
+        "final_write_matches_prewrite_baseline": restored_command,
         "post_restore_readback_confirmed": restore_readback,
         "limitations": [
             "USBPcap records are Windows URBs, not individual physical USB packets.",
             "A bare padded 0x8F may be an ACP application ACK; shape alone does not prove parameter change.",
-            "First/last write values matching is NOT proof of actual device restoration.",
+            "The original value must come from a PRE-write full Chorus readback, not the first write.",
+            "A final write matching the baseline is NOT proof of actual device restoration.",
             "Post-restore readback is only confirmed if a later full Chorus read was captured.",
             "Data is scoped by bus/address and ACP command, not a capture of the USB descriptor.",
             "Never use this diagnostic JSON to authorize firmware saves or automatic writes.",
@@ -259,7 +269,8 @@ def main() -> int:
             f"ACK={entry['ack_classification']}, "
             f"GET packet={entry.get('get_report_completion_packet', 'unpaired')}"
         )
-    print(f"Initial/final write values equal: {findings['first_last_write_value_equal']}")
+    print(f"Pre-write baseline readback: {findings['baseline_wet_from_prewrite_readback']}")
+    print(f"Final write matches baseline: {findings['final_write_matches_prewrite_baseline']}")
     print(f"Restoration readback in capture: {findings['post_restore_readback_confirmed']}")
     print(f"Report saved locally: {args.output}")
     print("No BPControl writes performed. ACK evidence must be reviewed before live control.")
