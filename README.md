@@ -2,7 +2,7 @@
 
 **BPControl** is an experimental, evidence-based controller toolkit for MVSilicon BP10xx DSP boards, initially targeting **BP1032** with the observed `HunXiang_F` firmware.
 
-> **Status: M0 (offline ACP protocol MVP).** Encoders, decoders and automated tests run without hardware. **USB HID transport is not yet implemented.** The project does not replace DSP firmware or process audio.
+> **Status: M1A (USB HID transport candidate implemented, live test pending).** The Windows driver is restricted to a single explicitly authorized Chorus read; it has **not yet been verified against the physical BP1032**. This project does not replace DSP firmware or process audio.
 
 ## Goals
 
@@ -56,3 +56,34 @@ Observed RAM for Guitar PingPong (base 65 KB): Normal 70/78/91/116 KB and HQ 82/
 ## License
 
 Not selected yet — repository owner to choose before accepting outside contributions.
+
+## Windows M1A — first one-shot hardware read (operator opt-in)
+
+The owner's 2026-11-22 USBPcap report established HID `MI_04`, control EP0,
+SET_REPORT Output / GET_REPORT Input, report ID 0, and 256-byte zero-padded
+ACP frames. The Windows HID APIs use 257-byte buffers including a leading ID
+selection byte. See [USB_CAPTURE_REPORT.md](docs/USB_CAPTURE_REPORT.md) and
+[M1_WINDOWS_FIRST_READ.md](docs/M1_WINDOWS_FIRST_READ.md).
+
+Offline tests:
+
+```powershell
+py -m pip install -e .
+py -m unittest discover -s tests -v
+```
+
+**Only after closing ACPWorkbench**, if you expressly want to send one
+non-mutating read query to the BP1032 (no parameter writes):
+
+```powershell
+py -m pip install hidapi
+py tools/read_chorus_windows.py --live-read-chorus
+```
+
+This **actively transmits one ACP read request** in a HID SET_REPORT.
+Do not confuse that transport operation with modifying effects. It does
+not save to flash, reset, install drivers or retry automatically. The runner
+has a parent-side 4-second timeout. Report any error instead of retrying blindly.
+
+GitHub Actions runs the offline test suite on Windows and Linux. CI success
+is not a substitute for testing the physical BP1032.
