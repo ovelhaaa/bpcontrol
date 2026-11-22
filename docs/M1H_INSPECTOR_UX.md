@@ -174,3 +174,39 @@ readback, restauração conservadora em erro, nenhum `0xFD` ou `0xFE`.
 Essa correção foi testada de forma automatizada quanto ao contrato
 de organização da GUI e à preparação puramente local do rascunho,
 **mas ainda precisa ser conferida visualmente no Windows do operador**.
+
+
+## Homologação física após correção da interface — 2026-11-22
+
+O operador enviou o histórico da nova janela M1H, agora com os
+controles de edição acessíveis:
+
+```text
+17:59:39  INÍCIO       M1H aberta · nenhum USB automático
+17:59:43  CONSULTA     Consulta USB solicitada
+17:59:43  CONSULTA     Chorus wet=80 · leitura USB
+17:59:49  APLICAR      Pedido de escrita wet 80 → 81
+17:59:49  APLICAR      80 → 81 · ACK/readback · volátil
+17:59:55  DESFAZER     Pedido de escrita wet 81 → 80
+17:59:55  DESFAZER     81 → 80 · ACK/readback · volátil
+17:59:59  CONSULTA     Consulta USB solicitada
+17:59:59  CONSULTA     Chorus wet=80 · leitura USB
+```
+
+**Conclusão:** homologação funcional da M1H no equipamento físico
+para o caminho **Consultar → Aplicar → Desfazer → Consultar novamente**.
+Os registros da GUI declaram ACK/readback de ambas as escritas,
+e a leitura manual independente ao final confirma `wet=80`.
+O operador conseguiu usar os controles após a correção do layout.
+
+Não foram anexados USBPcap nem respostas JSON completas da sessão.
+A validação baseia-se no histórico mostrado pela interface, cujo
+código verifica ACK, resposta do worker, estado dos sete campos e
+valor escrito. Isso é evidência forte do caminho funcional testado,
+**não** de recuperação sob desconexão, de controle genérico de
+outros efeitos, nem de funcionamento em todas as resoluções/DPI.
+
+**Próxima etapa sugerida (M1I):** sem ampliar ainda as escritas,
+organizar evidências de faixa e escala dos demais parâmetros Chorus,
+expor os ainda desconhecidos em modo leitura e definir testes
+de alteração/reversão individualizados antes de habilitá-los.
