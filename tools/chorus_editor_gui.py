@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from bpcontrol.chorus_editor import parse_wet_draft, validate_editor_target
 from bpcontrol.editor_view_model import (
     GROUPS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
-    evidence_label, display_value_origin,
+    evidence_label, display_value_origin, validate_success_reply,
 )
 from bpcontrol.snapshot import read_catalog
 from tools.audit_snapshot import audit_snapshot
@@ -104,12 +104,20 @@ def run_worker_once(mode: str, expected: tuple[int, ...] | None = None,
             "error": f"Invalid HID worker reply (exit {child.returncode}); "
                      "do not automatically retry.",
         }
-    if child.returncode != 0 and payload["status"] in ("READ_OK", "APPLIED_VERIFIED"):
-        return {
-            "status": "STATE_UNCERTAIN" if mode == "apply" else "READ_ERROR",
-            "error": f"Worker exit code {child.returncode} contradicts success status; "
-                     "state must be independently verified.",
-        }
+    if payload["status"] in ("READ_OK", "APPLIED_VERIFIED"):
+        if child.returncode != 0:
+            return {
+                "status": "STATE_UNCERTAIN" if mode == "apply" else "READ_ERROR",
+                "error": f"Worker exit code {child.returncode} contradicts success status; "
+                         "state must be independently verified.",
+            }
+        try:
+            validate_success_reply(mode, payload, expected, target)
+        except ValueError as exc:
+            return {
+                "status": "STATE_UNCERTAIN" if mode == "apply" else "READ_ERROR",
+                "error": f"Inconsistent worker success reply: {exc}",
+            }
     return payload
 
 
@@ -513,6 +521,24 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         busy[0] = False
         code = result.get("status")
         if mode == "read":
+            record_event(
+                "CONSULTA",
+                f"Chorus wet={result.get('wet')} · leitura USB"
+                if code == "READ_OK" else f"Falha de leitura: {code}",
+            )
+        elif code == "APPLIED_VERIFIED":
+            initial = result.get("initial") or []
+            before = initial[6] if len(initial) == 7 else "?"
+            record_event(
+                "DESFAZER" if undo else "APLICAR",
+                f"{before} → {result.get('target')} · ACK/readback · volátil",
+            )
+        else:
+            record_event(
+                "DESFAZER" if undo else "APLICAR",
+                f"Resultado {code} · requer revisão antes de nova escrita",
+            )
+        if mode == "read":
             if code == "READ_OK":
                 values = tuple(result.get("fields", ()))
                 if len(values) == 7 and all(type(v) is int for v in values):
@@ -606,6 +632,12 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             "Aplicando uma alteração USB e verificando o readback…",
             ORANGE,
         )
+        record_event(
+            "CONSULTA" if mode == "read" else
+            ("DESFAZER" if undo else "APLICAR"),
+            "Consulta USB solicitada" if mode == "read" else
+            f"Pedido de escrita wet {expected[6]} → {target}",
+        )
 
         def background():
             response = run_worker_once(mode, expected=expected, target=target)
@@ -666,6 +698,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         if manual_live[0] is not None:
             draft.set(str(manual_live[0][6]))
         set_status("Rascunho cancelado; nenhum comando USB enviado.", MUTED)
+        record_event("RASCUNHO", "Cancelado · sem comandos USB")
 
     def on_draft_edit(*_):
         # Only updates widgets. Deliberately contains no HID action or worker call.
@@ -703,6 +736,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     root.protocol("WM_DELETE_WINDOW", close)
     filter_list()
     choose_effect(15)
+    record_event("INÍCIO", "M1H aberta · nenhum USB automático")
     if not allow_live:
         set_status(
             "MODO OFFLINE: nenhuma ação USB disponível. Para habilitar leitura "
