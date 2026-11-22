@@ -2,7 +2,7 @@
 
 **BPControl** is an experimental, evidence-based controller toolkit for MVSilicon BP10xx DSP boards, initially targeting **BP1032** with the observed `HunXiang_F` firmware.
 
-> **Status: M1A physically verified for Windows Chorus READ (2026-11-22).** Owner-reported success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads are also verified on the physical BP1032; CPU usage unit is MCPS as defined by the ACPWorkbench manual. This toolkit neither replaces DSP firmware nor processes audio.
+> **Status: M1F physically verified for Windows Chorus wet WRITE/READBACK/RESTORE (2026-11-22); M1G editor prototype implemented, offline tested, pending physical validation.** Owner-reported success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads are also verified on the physical BP1032; CPU usage unit is MCPS as defined by the ACPWorkbench manual. This toolkit neither replaces DSP firmware nor processes audio.
 
 ## Goals
 
@@ -293,3 +293,45 @@ Next: M1G staged numeric editing (draft text stored locally, Apply/Enter
 only, validated field ranges, fresh readback and conflict detection).
 See [M1F_FIRST_LIVE_WRITE.md](docs/M1F_FIRST_LIVE_WRITE.md) and
 [ROADMAP.md](docs/ROADMAP.md).
+
+
+## M1G — First staged visual editor (Windows GUI; hardware acceptance pending)
+
+The initial M1G interface is a local **tkinter desktop** window. It uses the
+59-instance snapshot for navigation and read-only parameter inspection. It
+exposes exactly one writable parameter, **Guitar Chorus 0x8F / field 6 wet**.
+Unlike ACPWorkbench, typing digits into the editor never sends intermediate
+values. Only **Apply** or **Enter** plus an explicit confirmation sends a
+single volatile **±1** adjustment, after fresh firmware verification and two
+identical seven-field readbacks.
+
+First review the interface with **NO USB activity**:
+
+\`\`\`powershell
+cd C:\progs\bpcontrol
+git pull
+py -m pip install -e .
+py -m unittest discover -s tests -v
+py tools/chorus_editor_gui.py
+\`\`\`
+
+If the offline interface looks correct, with ACPWorkbench **closed** and
+audio muted or low, opt into manual USB reads and confirmation-gated edits:
+
+\`\`\`powershell
+py tools/chorus_editor_gui.py --enable-live-writes
+\`\`\`
+
+Nothing is transmitted merely by opening the window. Click **Consultar
+Chorus (USB)**, type the one-point change, select **Aplicar**, and confirm.
+If \`APPLIED_VERIFIED\` appears, **Desfazer último Apply** is available as
+another deliberate one-step operation with readback. No flash save is sent.
+
+If \`STATE_UNCERTAIN\`, the GUI blocks further writes; after the child
+process has exited, inspect the state in ACPWorkbench. Do not blindly retry.
+
+**M1G GUI-originated physical writes have not yet been tested**. The
+previously verified M1F command-line write/restore should not be confused
+with validation of this new graphical workflow.
+
+See [\`docs/M1G_GUI_EDITOR.md\`](docs/M1G_GUI_EDITOR.md) for safety and tests.
