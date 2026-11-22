@@ -479,3 +479,30 @@ strictly read-only, the only writable Chorus field remains wet (index6),
 and no `0xFD` flash-save or firmware command is enabled.
 
 See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
+
+
+## M1I third physical rate point — 2026-11-22
+
+In a third read-only BPControl session, the operator followed the proposed
+ACPWorkbench **5.00 Hz** intermediate test and sent a screenshot showing
+**Guitar Chorus field3 raw=500**. Alongside the two earlier operator-reported
+pairs, the evidence is now:
+
+| ACPWorkbench setting | BP1032 USB readback | Display ratio |
+|---|---:|---:|
+| 2.00 Hz | 200 | 100 raw/Hz |
+| 5.00 Hz | 500 | 100 raw/Hz |
+| 10.00 Hz | 1000 | 100 raw/Hz |
+
+**This supersedes earlier one-/two-point status notes above.** All three
+points support `f_display_Hz = raw / 100` for this BP1032 / ACPWorkbench
+combination. No overall range boundaries, every intermediate step,
+acoustic LFO speed, or BPControl Rate write/Undo safety have been proven.
+
+The inspector has been updated to show exactly those **three observed
+pairs**, with the **current USB rate raw** in the heading and other raw
+values marked as an inferred conversion. The Rate field stays strictly
+**read-only**; only Chorus wet field6 retains its confirmed ±1 guarded
+write pathway. The compact evidence table remains available.
+
+See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
