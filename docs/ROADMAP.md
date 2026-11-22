@@ -76,8 +76,10 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Add read-only “Chorus · Evidências” tab with seven raw fields, manual limits, snapshot/live origin, evidence sources and write permission indicators.
 - [x] Add offline tests protecting manual range source, unresolved scale, and wet-only permission. CI Windows/Linux green.
 - [ ] Operator UI review of M1I evidence tab (no new physical writes).
-- [ ] Resolve actual Chorus rate scale via sequential ACPWorkbench read display and BPControl readback at unchanged state; avoid any writes or simultaneous access.
-- [ ] Reconcile PingPong delay (manual says samples; old BPControl scheme says ms) before future control enablement.
+- [x] Cross-check protocol V2.40, `chorus.h`, `pingpong.h`, sample `communication.c`, `ctrlvars.c`, and Ohminecraft ESP32 adaptation; findings in [M1I_PROTOCOL_SDK_CROSSCHECK.md](M1I_PROTOCOL_SDK_CROSSCHECK.md).
+- [x] Reconcile ACP PingPong delay **ms** with SDK internal delay **samples**, converted by the BP1048 sample firmware; keep the host schema in ms.
+- [ ] Resolve **physical BP1032** Chorus rate scale using sequential ACPWorkbench display + BPControl raw readback, with zero writes and no simultaneous controllers.
+- [ ] Test the actual BP1032 PingPong max_delay/quality range before any write; the ms→samples conversion is evidenced only in the BP1048 sample firmware.
 
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
