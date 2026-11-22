@@ -31,12 +31,22 @@ def run_action(mode: str, expected_json: str | None, target: int | None) -> dict
         validate_editor_target(expected, target)
 
     with ChorusEditorSession() as session:
-        if mode == "read":
-            observed = read_editor_chorus(session)
-            return {"status": "READ_OK", "fields": list(observed), "wet": observed[6]}
-        if mode == "apply":
-            return apply_one_editor_step(session, expected, target).as_dict()
-        raise ValueError("unsupported mode")
+        try:
+            if mode == "read":
+                observed = read_editor_chorus(session)
+                return {"status": "READ_OK", "fields": list(observed), "wet": observed[6]}
+            if mode == "apply":
+                return apply_one_editor_step(session, expected, target).as_dict()
+            raise ValueError("unsupported mode")
+        except Exception as exc:
+            # Session phase is advanced BEFORE candidate HID SET_REPORT.
+            # Any exception after that point means board state may be unknown.
+            return {
+                "status": "REFUSED_NO_WRITE" if session._phase == 0
+                          else "STATE_UNCERTAIN",
+                "error": f"{type(exc).__name__}: {exc}",
+                "write_attempted": bool(session._phase),
+            }
 
 
 def main(argv=None) -> int:
@@ -71,7 +81,7 @@ def main(argv=None) -> int:
     except (ValueError, RuntimeError, OSError) as exc:
         # Exceptions from preflight refuse before mutation; any unexpected
         # transport exception after dispatch must be treated conservatively.
-        response = {"status": "REFUSED_OR_FAILED",
+        response = {"status": "READ_ERROR" if args.read else "STATE_UNCERTAIN",
                     "error": f"{type(exc).__name__}: {exc}",
                     "instruction": "If a write may have begun, verify state manually."}
     print(json.dumps(response, ensure_ascii=False, separators=(",", ":")), flush=True)
