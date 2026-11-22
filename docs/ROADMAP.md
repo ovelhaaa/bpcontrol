@@ -60,7 +60,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Display every other field in read-only snapshot table, show mapping evidence and errors/uncertain-state lock.
 - [x] Exercise pure draft parsing, ±1 validation, full-state conflicts, lost ACK, failed rollback, drift, worker timeout and bad worker output with offline mocks.
 - [x] M1H: grouped 59-effect navigation/search, dedicated snapshot-vs-live origin, pure ±1 draft preview, in-memory activity history, and stricter 7-field worker reply validation (offline CI passed).
-- [ ] Operator physical acceptance of M1H UI: navigation, staged draft, Apply/Undo feedback and activity log. No expanded write allowlist.
+- [x] Operator physically confirmed M1H manual USB reads twice (Chorus wet=80) and reported Apply control not visible; identified layout ordering and overwide action row as likely causes, corrected in GUI.\n- [ ] Operator visual acceptance of corrected M1H: Chorus editor visible above tabs, −1/+1 staging, Apply/Undo workflow. No expanded write allowlist.
 - [ ] Later: evaluate one additional Chorus parameter only after establishing its valid range/scaling, UI evidence and reversible write/readback test.\n
 ## M1H — inspector UX (implementation complete, physical acceptance pending)
 - [x] Separate live Chorus value from saved snapshot, show evidence/field origins, and preview pending ±1 changes.
@@ -86,7 +86,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** M1F write/readback/restore passed on the physical BP1032, and operator accepted both Apply and Undo of M1G on hardware. **M1H has now been implemented and passed offline tests on Windows/Linux, but has not yet been tried by the operator on the physical BP1032.** It improves grouped navigation, source labels (snapshot vs USB), a purely local ±1 draft preview, in-memory operation history and strict response validation. The only physically writable field remains Chorus `0x8F` field 6 wet with explicit approval; no flash saves, continuous writes, or additional effect writes. See [M1H_INSPECTOR_UX.md](M1H_INSPECTOR_UX.md).
+**Now:** M1F write/readback/restore passed on the physical BP1032, and operator accepted both Apply and Undo of M1G on hardware. **M1H has now been implemented and passed offline tests on Windows/Linux; the operator confirmed two successful physical Chorus USB reads (wet=80) but could not see the editing controls.** The editor has been repositioned above the expandable notebook with visible ±1 stage buttons and a separate Apply action row; physical acceptance of the corrected layout is pending. It improves grouped navigation, source labels (snapshot vs USB), a purely local ±1 draft preview, in-memory operation history and strict response validation. The only physically writable field remains Chorus `0x8F` field 6 wet with explicit approval; no flash saves, continuous writes, or additional effect writes. See [M1H_INSPECTOR_UX.md](M1H_INSPECTOR_UX.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
