@@ -37,9 +37,9 @@ A leitura BP1032 `raw 200` e o display `2,00 Hz` não podem ser reconciliados me
 - **Única escrita permitida:** Guitar Chorus `0x8F`, campo 6 `wet`, com a proteção M1H já homologada (Apply explícito, ±1, readback e Undo).
 - Não fazer gravação na flash (`0xFD`), atualização de firmware (`0xFE`) ou testes destrutivos.
 
-## Evidência adicional ideal para calibrar a escala
+## Proposta histórica de investigação (realizada)
 
-O próximo passo, **se necessário**, seria observar um **segundo par de valores distintos** apresentados pelo ACPWorkbench e lidos via BPControl, sempre em programas separados, **sem escrita pelo BPControl**. Esse segundo ponto permitiria avaliar a linearidade candidata `raw/100`, mas **ainda não seria teste dos limites ou prova acústica da frequência do LFO**.
+Na primeira rodada, propusemos observar um segundo par de valores no ACPWorkbench e no BPControl, sem escrita pelo BPControl. **O operador completou esse ensaio posteriormente**, conforme registrado abaixo: 10,0 Hz ↔ raw=1000. Ainda não é um teste dos limites nem uma prova acústica da frequência do LFO.
 
 A captura original foi compartilhada na conversa e **não foi publicada no repositório**. Este arquivo preserva a proveniência textual e evita expor artefatos locais sem autorização explícita.
 
