@@ -42,13 +42,13 @@ Esta é a camada que o BPControl já usa com êxito no HID MI_04. A API `chorus_
 | `ACPWorkbench.ini` | Valor de configuração `modulation_rate=10`; **não** comprova o estado da BP1032 |
 | Log ACPWorkbench antigo | Mostra uma escrita de **raw 100** com ACK/readback; não contém o texto em Hz exibido pela interface nessa operação |
 | Placa BP1032, M1F | Leitura física **raw 200**, superior ao máximo indicado pelo protocolo/SDK de exemplo |
-| BP1032, M1I (2026-11-22) | Captura USB raw=200 e relato de ACPWorkbench exibindo 2,00 Hz; um par compatível com raw/100 |
+| BP1032, M1I (2026-11-22) | Capturas USB raw=200 e raw=1000, com ACPWorkbench relatado em 2,00 Hz e 10,0 Hz respectivamente; dois pares concordantes com raw/100 |
 
 **Conclusão documental anterior:** `raw/10` tem concordância de manual e de API **no SDK BP1048**; isso não determina a escala da firmware BP1032.
 
-**Nova evidência física, 2026-11-22:** o operador enviou captura da M1I com **USB raw=200** para `Guitar Chorus / field3` e informou que o **ACPWorkbench exibe 2,00 Hz** para esse parâmetro. A associação sustenta **raw/100 nesse ponto de exibição da BP1032**, em divergência com a escala `raw/10` documentada no SDK BP1048. **A linearidade e os limites da BP1032 continuam desconhecidos.** O número em Hz é um relato direto do operador; não foi anexada uma segunda captura do ACPWorkbench. Ver [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
+**Novas evidências físicas, 2026-11-22:** o operador enviou duas capturas de leitura M1I para `Guitar Chorus / field3`: `raw=200` associado ao valor ACPWorkbench relatado de **2,00 Hz**, e, depois de configurar ACPWorkbench para **10,0 Hz**, `raw=1000`. **Ambos os pontos são consistentes com `raw/100` no controle apresentado pela BP1032**, diferente do `raw/10` documentado para a API do SDK BP1048. A linearidade de toda a faixa, os limites e a modulação acústica continuam não testados. Ver [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
 
-**Decisão:** campo 3 continua **somente leitura**. A GUI pode apresentar `2,00 Hz` somente quando `raw=200` como *ponto relatado e observado*; não extrapolar para outros valores.
+**Decisão:** campo 3 continua **somente leitura**. A GUI mostra as duas correlações específicas; para outros valores não declara frequência comprovada.
 
 ## 3. Ping Pong: milissegundos na ACP, amostras na API interna
 
