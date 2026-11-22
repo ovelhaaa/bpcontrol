@@ -335,3 +335,52 @@ previously verified M1F command-line write/restore should not be confused
 with validation of this new graphical workflow.
 
 See [`docs/M1G_GUI_EDITOR.md`](docs/M1G_GUI_EDITOR.md) for safety and tests.
+
+## M1H — inspector UX (offline CI green; hardware acceptance pending)
+
+The same familiar entry point `tools/chorus_editor_gui.py` now opens
+the **M1H** inspector. All 59 saved effect instances are navigable with
+search and a category filter. The parameter table indicates
+**`Snapshot salvo`** versus **`USB / leitura atual`**, so a saved JSON
+value cannot be mistaken for a current hardware reading.
+
+The Chorus wet editor shows the **last confirmed live value** separately
+from the local draft and displays a preview, such as `80 → 79 (-1)`.
+`Aplicar` stays disabled until the operator has manually read the physical
+board and entered a value exactly one point higher/lower. Typing, deleting
+digits, changing focus, searching or navigating effects sends **no USB
+commands**.
+
+A new `Atividade da sessão` tab provides an in-memory record of manual
+read, Apply, Undo, and draft cancellation. It stores at most 100 events
+locally and copies them to the clipboard only on user request; nothing
+is uploaded or automatically written to disk. Device worker responses are
+now cross-checked against all seven expected Chorus fields, ACK validity
+and the exact requested step before the GUI claims success.
+
+Run **offline, no device access**:
+
+```powershell
+cd C:\progs\bpcontrol
+git pull
+py -m pip install -e .
+py -m unittest discover -s tests -v
+py tools/chorus_editor_gui.py
+```
+
+After inspecting the new layout, optionally try it on BP1032 with
+ACPWorkbench closed and audio quiet:
+
+```powershell
+py tools/chorus_editor_gui.py --enable-live-writes
+```
+
+No automatic USB I/O on window startup. `Consultar Chorus (USB)`,
+`Aplicar`, and `Desfazer` still require intentional clicks and
+confirmation. The write allowlist, ±1 restriction, worker deadline,
+recovery and no-flash policy are unchanged.
+
+**The M1H version of the GUI still needs operator acceptance on the
+physical board.** Physical M1G success is not proof of M1H UI behavior.
+
+See [`docs/M1H_INSPECTOR_UX.md`](docs/M1H_INSPECTOR_UX.md).
