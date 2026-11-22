@@ -59,7 +59,16 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Operator explicitly confirms both GUI **Aplicar** and **Desfazer** work on physical BP1032 (2026-11-22). Full per-operation USB/JSON traces are not yet archived; this is operator acceptance, not an independent capture.
 - [x] Display every other field in read-only snapshot table, show mapping evidence and errors/uncertain-state lock.
 - [x] Exercise pure draft parsing, ±1 validation, full-state conflicts, lost ACK, failed rollback, drift, worker timeout and bad worker output with offline mocks.
-- [ ] M1H: refine layout, safe staged numeric editing and status feedback; keep all other parameters read-only pending individual evidence.\n
+- [x] M1H: grouped 59-effect navigation/search, dedicated snapshot-vs-live origin, pure ±1 draft preview, in-memory activity history, and stricter 7-field worker reply validation (offline CI passed).
+- [ ] Operator physical acceptance of M1H UI: navigation, staged draft, Apply/Undo feedback and activity log. No expanded write allowlist.
+- [ ] Later: evaluate one additional Chorus parameter only after establishing its valid range/scaling, UI evidence and reversible write/readback test.\n
+## M1H — inspector UX (implementation complete, physical acceptance pending)
+- [x] Separate live Chorus value from saved snapshot, show evidence/field origins, and preview pending ±1 changes.
+- [x] Add group filter and an in-memory activity tab with explicit Copy; no automatic telemetry, disk logging or new USB commands.
+- [x] Reject malformed seven-field readback or inconsistent ACK-backed Apply response before presenting success.
+- [x] Add offline tests for source labels, 59-effect filters, staged numeric drafts, and success-response parity.
+- [ ] Validate M1H GUI on BP1032 (M1G already approved, M1H not yet physically checked).
+
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
 - [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
@@ -77,7 +86,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** physical M1F first write/readback/restore PASSED. **M1G Windows desktop GUI is implemented, offline-tested and reported functional by the operator on the physical setup**. The operator explicitly confirms that both Apply and Undo worked on physical BP1032; per-button protocol traces were not supplied. It displays the 59-effect saved snapshot read-only, requires manual live Chorus read, stores all keyboard edits in a local draft, allows a confirmed explicit **±1 wet Apply**, rereads all seven fields for conflict detection, validates ACK/readback, and offers a separate confirm-to-Undo action. On errors it attempts one restore; if restoration cannot be confirmed, it locks new writes. There are no automatic USB reads on startup and no flash saves. See [M1G_GUI_EDITOR.md](M1G_GUI_EDITOR.md).
+**Now:** M1F write/readback/restore passed on the physical BP1032, and operator accepted both Apply and Undo of M1G on hardware. **M1H has now been implemented and passed offline tests on Windows/Linux, but has not yet been tried by the operator on the physical BP1032.** It improves grouped navigation, source labels (snapshot vs USB), a purely local ±1 draft preview, in-memory operation history and strict response validation. The only physically writable field remains Chorus `0x8F` field 6 wet with explicit approval; no flash saves, continuous writes, or additional effect writes. See [M1H_INSPECTOR_UX.md](M1H_INSPECTOR_UX.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
