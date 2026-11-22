@@ -19,6 +19,8 @@ class DeviceInfoTests(unittest.TestCase):
         status = parse_system_status(frame)
         self.assertEqual(status.memory_kb, 70)
         self.assertEqual(status.cpu_usage_raw, 26)
+        self.assertEqual(status.cpu_mcps, 26)
+        self.assertAlmostEqual(status.cpu_percent_of_nominal_max, 8.125)
         self.assertFalse(status.external_parameter_change)
         self.assertEqual(status.cpu_max_mhz, 320)
         self.assertEqual(status.memory_max_kb, 320)
@@ -46,6 +48,7 @@ class DeviceInfoTests(unittest.TestCase):
         status = parse_system_status(frame)
         self.assertTrue(status.external_parameter_change)
         self.assertIsNone(status.memory_percent)
+        self.assertEqual(status.cpu_percent_of_nominal_max, 0)
 
     def test_unknown_firmware_type_preserved(self):
         info = parse_firmware_info(ACPFrame(0, bytes.fromhex("F7 01 02 03 04 05 06")))
