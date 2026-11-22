@@ -94,14 +94,14 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [ ] Music USB Audio Lab: WAV injection, capture, RMS/spectral/stereo comparison (no direct HID/audio coupling) after Music inspection.
 - [ ] Capture ACPWorkbench effect-parameter writes passively before proposing any parameter-level Music write/Undo.
 
-## M1K-A — Harmonic Exciter (`0x9D`) Protocol Evidence (offline-validated, passive capture pending)
+## M1K-A — Harmonic Exciter (`0x9D`) Protocol Evidence (passive capture analyzed; live writes still disabled)
 - [x] Record operator-reported ACPWorkbench observation that Exciter cutoff minimum appears to be 1000 Hz (consistent with BP1048 SDK `exciter.h`, vs 300 Hz in ACP V2.40) without treating it as universal proof across all bounds or firmwares.
 - [x] Audit Exciter (`0x9D`, index 29) schema against ACP V2.40 §5.20.26 and BP1048 SDK (`exciter.h`, `audio_effect.c`, `communication.c`) in `src/bpcontrol/exciter_evidence.py`.
 - [x] Add `--scenario exciter-ack` to `tools/capture_usb_passive.py` and document the PowerShell passive USBPcap procedure in `docs/M1K_A_EXCITER_PROTOCOL_EVIDENCE.md`.
 - [x] Implement offline PCAP analyzer (`tools/analyze_exciter_write_ack.py`) associating SET_REPORT, GET_REPORT, ACK, and readbacks per field with pre-write baseline and restoration verification.
 - [x] Add synthetic PCAP fixtures and unit tests (`tests/test_exciter_write_ack.py`) for isolated changes, missing ACKs, invalid packets, out-of-order responses, duplicates, and unconfirmed restoration.
 - [x] Implement offline-only staged Exciter editor prototype (`src/bpcontrol/exciter_editor.py`, `tools/exciter_editor_gui.py`) with `EXCITER_LIVE_WRITE_ENABLED = False`, no USB writes, no continuous sliders, and no flash saves.
-- [ ] Operator runs passive USBPcap capture (`--scenario exciter-ack`) for isolated ACPWorkbench cutoff/dry/wet changes and analyzes with `tools/analyze_exciter_write_ack.py`.
+- [x] Operator ran passive USBPcap capture (`--scenario exciter-ack`) and offline analysis (`exciter-01-ack.json`, 2026-11-22): 15 `0x9D` writes (`cutoff`, `dry`, `wet`), 0 invalid packets, `bare_9d_zero_padded` ACKs (~5 ms), ACPWorkbench partial-typing confirmed (`8→80`, `1→10→100`), baseline `[1, 1000, 100, 100]` and `restoration_status = "confirmed"`. Live Exciter writes remain disabled pending M1K-B gate.
 
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.

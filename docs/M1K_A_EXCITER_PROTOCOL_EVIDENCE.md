@@ -67,7 +67,21 @@ Abrir offline:
 py tools/exciter_editor_gui.py
 ```
 
-## 4. Limitações e itens explicitamente fora de escopo (M1K-A)
+## 4. Evidência física capturada (2026-11-22 — `exciter-01-ack.json` local)
+
+O operador executou a captura passiva USBPcap (`exciter-01.pcapng`, bus 2, address 1) e rodou `tools/analyze_exciter_write_ack.py`:
+
+- **Baseline pré-escrita (`0x9D`)**: `enable=1`, `cutoff=1000`, `dry=100`, `wet=100` (`A5 5A 9D 09 FF 01 00 E8 03 64 00 64 00 16`).
+- **Escritas observadas (`15` escritas `0x9D`, `0` pacotes inválidos)**:
+  - `cutoff` (campo 1): `1200 → 1200 (duplicada) → 1000 → 1000 (duplicada)`; restaurado para `1000` com readback confirmado.
+  - `dry` (campo 2): `8 → 80 → 80 (duplicada) → 1 → 10 → 100` (comportamento de digitação parcial do ACPWorkbench ao digitar `80` e `100`); restaurado para `100` com readback confirmado.
+  - `wet` (campo 3): `8 → 80 → 1 → 10 → 100` (digitação parcial do ACPWorkbench ao digitar `80` e `100`); restaurado para `100` com readback confirmado.
+- **Formato do ACK**: `7` respostas pareadas diretamente como `bare_9d_zero_padded` (`9D 00 ... 00`, 256 bytes, latência ~5,0–5,7 ms), idêntico ao padrão `bare_8f_zero_padded` observado no Chorus (`0x8F`). Outras `8` escritas tiveram URBs intercalados (`out_of_order_or_interleaved`) devido ao tráfego paralelo do ACPWorkbench, com os readbacks subsequentes confirmando os valores aplicados.
+- **Restauração**: `final_writes_match_prewrite_baseline = true`, `post_restore_readback_confirmed = true`, `restoration_status = "confirmed"`.
+
+Essa captura confirma o padrão de quadro `A5 5A 9D 03 <campo> <val_lo> <val_hi> 16` e o ACK `9D 00...` para `cutoff`, `dry` e `wet`, além de reforçar a regra de **edição staged** (nunca enviar valores parciais durante digitação). **Nenhuma escrita USB ao vivo do Exciter está habilitada em M1K-A**; a autorização de um eventual probe M1K-B depende de revisão desta evidência.
+
+## 5. Limitações e itens explicitamente fora de escopo (M1K-A)
 
 - **Não implementado:** live writes de Exciter (`0x9D`), Music 3D (`0x97`), 3D Plus (`0x98`) ou Stereo Widener (`0x9B`).
 - **Não implementado:** sliders com envio contínuo por USB.

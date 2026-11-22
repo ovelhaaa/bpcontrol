@@ -534,6 +534,11 @@ control; `0x97`, `0x98`, `0x9B`, `0x9D` remain read-only on USB):
 - Offline-only staged Exciter editor prototype (`src/bpcontrol/exciter_editor.py`,
   `tools/exciter_editor_gui.py`) with `EXCITER_LIVE_WRITE_ENABLED = False`, no
   continuous sliders, and no USB/flash access.
+- Physical passive USBPcap capture analyzed (`exciter-01-ack.json`, 2026-11-22):
+  15 `0x9D` writes across `cutoff`, `dry`, and `wet` from baseline `[1, 1000, 100, 100]`,
+  `bare_9d_zero_padded` ACKs (~5 ms), ACPWorkbench partial-typing behavior observed
+  (`8→80`, `1→10→100`), and `post_restore_readback_confirmed = true`. Live Exciter writes
+  remain disabled.
 
 Run the offline prototype (no USB):
 
