@@ -13,7 +13,8 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Implement 0x02 status parsing with physical fixture and MCPS unit.
 - [x] Extract 59 instance names/types/parameter hints from owner-supplied ACPWorkbench.ini (not proof of current values).
 - [x] Implement offline structural M1D auditor with raw-byte/word parity checks and 59-instance mapping-confidence table.
-- [x] Operator-run M1D audit output: 59/59, 845 raw parameter fields, 0 INI field-count discrepancies, 0 audit errors/warnings (2026-11-22).\n- [ ] Validate per-field semantics, musical scaling and parameter ranges using independent protocol/UI evidence; full raw JSON remains local.
+- [x] Operator-run M1D audit output: 59/59, 845 raw parameter fields, 0 INI field-count discrepancies, 0 audit errors/warnings (2026-11-22).
+- [ ] Validate per-field semantics, musical scaling and parameter ranges using independent protocol/UI evidence; full raw JSON remains local.
 - [ ] Correct Echo quality mode (0..2); reconcile Chorus rate scaling vs UI evidence.
 
 ## M1A — Windows USB discovery (read-only, no reflash)
@@ -30,16 +31,31 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Verify firmware and status reads on physical board; decode observed values from official protocol v2.40.0 and ACPWorkbench MCPS unit. See [M1_PHYSICAL_FIRMWARE_STATUS.md](M1_PHYSICAL_FIRMWARE_STATUS.md).
 - [x] Implement one bounded 59-effect snapshot with strict version gate, explicit opt-in, fail-closed reports and offline tests.
 - [x] Operator reports successful physical batch read and HTML visualization (2026-11-22).
-- [x] User supplied complete M1D console output confirming 59/59 reads with 845 words and 0 structural errors/warnings.\n- [ ] Independently inspect the saved raw JSON when provided; continue to avoid automatic USB retries.
+- [x] User supplied complete M1D console output confirming 59/59 reads with 845 words and 0 structural errors/warnings.
+- [ ] Independently inspect the saved raw JSON when provided; continue to avoid automatic USB retries.
 - [ ] Robust reconnect handling and cancellation across UI workflows. Do not open ACPWorkbench simultaneously.
 
-## M1E — First write preparation (no live writes yet)\n- [x] Add offline-only Chorus wet ±1 proposal with strict live-snapshot audit gate and byte-exact rollback frames.\n- [x] Add regression tests refusing partial/corrupt snapshots or incompatible firmware.\n- [x] Implement passive USBPcap Chorus wet-write/ACK analyzer with baseline and post-restore readback checks; synthetic regression tests pass.\n- [x] Operator reports physical Chorus wet write/ACK capture: 6/6 bare 0x8F ACKs, baseline 80 and final readback restoration. Intermediate 8/81 values match live typing in ACPWorkbench.\n- [x] Provide offline mixed Chorus/Auto Wah timeline for diagnostic review.\n- [x] Physical mixed-activity timeline confirms Auto Wah enable 0→1→0 with final full readback 0, same as pre-test.\n- [x] Implement M1F opt-in Windows-only one-step Chorus wet probe with 2 preflight readbacks, strict ACK, readback, one restoration attempt and 7-field verification. **Offline-tested only.**\n- [ ] Run the first M1F probe on physical BP1032 and review PASS/ERROR/UNCERTAIN output. See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).\n\n## M1B — Safe controls
-- [ ] Guarded, user-approved write on a known parameter, with readback verification, rollback to prior value and safe interruption behavior.
+## M1E — First write preparation (no live writes yet)
+- [x] Add offline-only Chorus wet ±1 proposal with strict live-snapshot audit gate and byte-exact rollback frames.
+- [x] Add regression tests refusing partial/corrupt snapshots or incompatible firmware.
+- [x] Implement passive USBPcap Chorus wet-write/ACK analyzer with baseline and post-restore readback checks; synthetic regression tests pass.
+- [x] Operator reports physical Chorus wet write/ACK capture: 6/6 bare 0x8F ACKs, baseline 80 and final readback restoration. Intermediate 8/81 values match live typing in ACPWorkbench.
+- [x] Provide offline mixed Chorus/Auto Wah timeline for diagnostic review.
+- [x] Physical mixed-activity timeline confirms Auto Wah enable 0→1→0 with final full readback 0, same as pre-test.
+- [x] Implement M1F opt-in Windows-only one-step Chorus wet probe with 2 preflight readbacks, strict ACK, readback, one restoration attempt and 7-field verification; 84 offline tests passed and physical success verified.
+- [x] First physical M1F probe succeeded (2026-11-22): PASS_RESTORED, Chorus wet 80→79→80, both ACKs valid, all 7 fields identical after restoration; no flash save. See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).\n\n## M1B — Safe controls
+- [x] First guarded user-approved write on Chorus wet, with valid candidate readback and verified restoration on physical BP1032.
+- [ ] Expand to separately validated parameters only; handle disconnection, stale state, and cancellation failures conservatively.
 - [ ] Never emit `0xFD` persist/save, `0xFE` firmware upgrade, factory reset or unknown/reserved writes in the default transport.
 - [ ] Acknowledge application-layer ACK is not proof of persistent configuration.
 - [ ] Introduce local presets only after reliable read/write is proven.
 
-## M2 — UI and resource management
+## M1G — UI editing, staged not streaming
+- [ ] Implement an editable Chorus wet field with local draft state; digits, Backspace and focus changes MUST NOT transmit intermediate values.
+- [ ] Apply explicitly on Enter or button only, with numeric range check and fresh baseline comparison.
+- [ ] Add single-shot confirmed change with readback and no flash save; separate deliberate persistent UI edits from the temporary write/restore probe.
+- [ ] Make every unvalidated parameter read-only; add per-field evidence and recovery status.
+- [ ] Exercise UI cancellation, invalid inputs, stale values, errors and disconnects with offline fakes before any new physical write.\n\n## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
 - [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
 - [ ] 0x02 system status telemetry (CPU and RAM) validated against ACPWorkbench.
@@ -56,7 +72,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** physical M1E evidence confirms six Chorus wet writes and six HID padded 0x8F ACKs, with readback restoration of Chorus wet=80. Auto Wah enable=0→1→0 also returned to the original state by readback. The first **operator-opt-in** BPControl M1F live write/readback/restore probe is implemented, and its offline regression tests passed, but **it has NOT yet been tested against physical hardware**. Only Chorus field 6 (wet) may change by exactly one unit and be restored; no flash save or arbitrary field writes. See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).
+**Now:** M1F has **passed on the physical BP1032** (operator terminal evidence, 2026-11-22). The firmware-gated Windows HID probe changed exactly one Chorus wet field **80→79**, verified both the candidate and restoration ACK/readback, and returned all seven fields to their initial values **80** and the original tuple. **84 offline unit tests passed**. This validates the known happy path only; disconnection/timeouts and arbitrary parameter writes are not proven safe. Next stage: M1G staged, explicit-Apply Chorus editor (start offline; only expand hardware writes after individual controls pass evidence gates). See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
