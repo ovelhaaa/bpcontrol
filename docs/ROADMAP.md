@@ -10,7 +10,8 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] ACP encode/decode including signed 16-bit words.
 - [x] Six observed effect schemas and packet fixtures; offline CLI and unit tests.
 - [x] Review owner-supplied official ACPWorkbench manual, V2.40.0 communication specification and exported INI.
-- [x] Implement 0x02 status parsing with physical fixture and MCPS unit.\n- [ ] Incorporate the 59 instance effect catalog and documented parameter limits.
+- [x] Implement 0x02 status parsing with physical fixture and MCPS unit.
+- [x] Extract 59 instance names/types/parameter hints from owner-supplied ACPWorkbench.ini (not proof of current values).\n- [ ] Reconcile all 59 instance readbacks against INI hints and documented parameter ranges.
 - [ ] Correct Echo quality mode (0..2); reconcile Chorus rate scaling vs UI evidence.
 
 ## M1A — Windows USB discovery (read-only, no reflash)
@@ -25,7 +26,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Verify a real Windows one-shot Chorus read on BP1032: `[1,20,10,200,50,80,80]`.
 - [x] Implement opt-in, one-shot, no-retry firmware `0x00` and status `0x02` readers with offline tests.
 - [x] Verify firmware and status reads on physical board; decode observed values from official protocol v2.40.0 and ACPWorkbench MCPS unit. See [M1_PHYSICAL_FIRMWARE_STATUS.md](M1_PHYSICAL_FIRMWARE_STATUS.md).
-- [ ] Timeouts, cancellation, reconnect detection, clear errors and test fakes. Do not open ACPWorkbench simultaneously.
+- [x] Implement one bounded 59-effect snapshot with strict version gate, explicit opt-in, fail-closed reports and offline tests.\n- [ ] Validate full 59-effect snapshot on physical BP1032; no automatic retries.\n- [ ] Robust reconnect handling and cancellation across UI workflows. Do not open ACPWorkbench simultaneously.
 
 ## M1B — Safe controls
 - [ ] Guarded, user-approved write on a known parameter, with readback verification, rollback to prior value and safe interruption behavior.
@@ -34,7 +35,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [ ] Introduce local presets only after reliable read/write is proven.
 
 ## M2 — UI and resource management
-- [ ] Desktop editor for the documented effects, with bypass, guarded ranges, preset import/export.
+- [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.\n- [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
 - [ ] 0x02 system status telemetry (CPU and RAM) validated against ACPWorkbench.
 - [ ] PingPong memory model and resource warnings for 100/250/500/1000 ms normal/HQ.
 - [ ] Avoid assuming algorithms only present in the generic manual are installed on this board.
@@ -49,6 +50,6 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** physical Windows HID read for Chorus `0x8F`, firmware `0x00` and status `0x02` is **verified**. Firmware `0.3.0`, effects `2.24.0`; CPU `26 MCPS` and memory `70/320 KB` recorded. Next prioritize full effects catalog and safe read-only snapshot UI; parameter writes remain disabled.
+**Now:** live Windows Chorus/firmware/status reads are physically confirmed. A **new, not-yet-hardware-tested** 59-effect read-only batch and offline HTML explorer are implemented. Next input is one operator-authorized `py tools/snapshot_windows.py --live-read-all --output artifacts/snapshots/bp1032-01.json` run (ACPWorkbench closed). Audit partial replies before enabling any device writes. Parameter writes remain disabled.
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
