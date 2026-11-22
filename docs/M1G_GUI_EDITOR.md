@@ -172,3 +172,20 @@ detalhada disponível para a operação `wet 80→79→80`,
 com ACKs e readbacks. A próxima iteração deve melhorar
 usabilidade e instrumentação de status, preservando o escopo
 restrito de escrita e as salvaguardas de restauração.
+
+## Confirmação adicional — homologação funcional M1G (2026-11-22)
+
+Após a primeira confirmação genérica, o proprietário respondeu
+explicitamente **“sim, ambas operações funcionam”**, referindo-se
+à execução de **Aplicar** e **Desfazer** na interface M1G com BP1032.
+
+**Resultado:** os dois fluxos de operação gráfica foram **aceitos pelo
+operador na placa física**. A M1G pode ser considerada funcionalmente
+homologada nesse escopo: Chorus wet (campo 6), mudança unitária
+volátil, confirmação explícita e Undo. A instrumentação de readback
+está no código e teve testes offline; não recebemos log independente
+contendo as duas respostas JSON da GUI nem USBPcap dessa rodada.
+
+**Escopo da próxima M1H:** melhorias de UX e inspeção dos 59 efeitos,
+sem ampliação automática da lista de parâmetros graváveis,
+sem streams de escritas e sem persistência na flash.
