@@ -21,13 +21,23 @@ A5 5A CMD LEN [LEN bytes of payload] 16
   INI uses raw 10 and an ACPWorkbench USB log captured a raw 100
   write. Treat all those as separate observations; do not claim a
   definitive frequency or enable rate writes until reconciled.
+- **BP1048 SDK corroboration:** `chorus.h` v1.1.1 documents raw/10
+  for the *BP1048 algorithm API*. Its example `communication.c`
+  substitutes 10 for Chorus rate writes >100, whereas physical BP1032
+  readback contained raw200. The observed value is not proof of
+  raw/100 scaling or of identical/different firmware; do not write.
+  See [M1I_PROTOCOL_SDK_CROSSCHECK.md](M1I_PROTOCOL_SDK_CROSSCHECK.md).
 - **Chorus nominal ranges per the manual (§6.1.27):** Delay Length
   1..25 ms; Modulation Depth 0..(delay_length−1) ms; Feedback 0..50%;
   Dry and Wet 0..100%. These are documentation-level limits, not
   completed hardware boundary tests for firmware HunXiang_F.
-- **PingPong warning:** the same manual §6.1.30 describes `Delay`
-  in samples, whereas the earlier BPControl schema labeled it
-  milliseconds. Treat that unit as unresolved too before writing.
+- **PingPong host/API unit bridge:** protocol V2.40 §5.20.30
+  documents ACP `delay` in **ms** (default 250 ms) and `max_delay` in
+  **ms** (default 1000 ms). BP1048 SDK `pingpong.h` takes **samples**
+  internally; example firmware `ctrlvars.c` explicitly converts
+  `delay_samples = delay_ms * sample_rate / 1000` (also max_delay).
+  Retain **ms** in BPControl's ACP schema; firmware-specific behavior
+  still needs live verification.
 - Echo and PingPong gain: approximately `int(32768 * 10**(dB/20))` for -6, -7, -8 dB.
 - Mic Echo field 04 is **unknown**; readback-only `max_delay` fields are locked in the observed UI.
 - Most individual Pro Reverb labels are **inferred, not independently confirmed**.
