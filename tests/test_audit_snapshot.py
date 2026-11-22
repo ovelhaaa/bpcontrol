@@ -83,7 +83,11 @@ class SnapshotAuditTests(unittest.TestCase):
         snapshot = self.synthetic_complete()
         report = audit_snapshot(snapshot, self.catalog)
         self.assertEqual(len(report["instances"]), 59)
-        self.assertEqual(report["instances"][14]["mapping_level"], "known_schema")
+        # M1I: Chorus rate scaling is now explicitly marked inferred after
+        # ACPWorkbench manual raw/10 conflicted with earlier raw/100
+        # and a physical readback of 200. Field count is still known.
+        self.assertEqual(report["instances"][14]["mapping_level"],
+                         "known_schema_with_inference")
         self.assertEqual(report["instances"][41]["mapping_level"], "raw_only")
         self.assertEqual(report["instances"][12]["mapping_level"],
                          "known_schema_with_inference")
