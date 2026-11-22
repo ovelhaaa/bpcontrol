@@ -52,6 +52,31 @@ For actual report lengths, report IDs, endpoint addresses and packet layouts, in
 - [x] Composite audio interface MI_00 recognized.
 - [x] Consumer-control HID collection MI_03 recognized.
 - [x] **Vendor-defined HID collection MI_04 recognized**.
-- [ ] HID report descriptor and report sizes identified.
+- [x] Manufacturer `MV-SILICON`, product `mvsilicon B1 usb audio`, release `0x0100`, collection `MI_04` usage page `0xFF00`, usage `0x55AA` confirmed via hidapi enumeration.\n- [ ] HID report capacities / actual descriptor and report IDs identified.
 - [ ] Verified USB ACP read transaction on MI_04.
 - [ ] PC read-only BPControl transport implemented.
+
+## Next result — hidapi enumeration supplied by owner
+
+```text
+Found 2 HID collection(s) for 1235:0003.
+MI_03: UsagePage=0x000C, Usage=0x0001,
+       Manufacturer=MV-SILICON, Product=mvsilicon B1 usb audio,
+       release=0x0100
+MI_04: UsagePage=0xFF00 (vendor-defined), Usage=0x55AA,
+       Manufacturer=MV-SILICON, Product=mvsilicon B1 usb audio,
+       release=0x0100
+```
+
+This strongly isolates `MI_04` as ACP transport candidate. The `0x55AA` usage **does not prove** payload framing, report IDs or report sizes. Do not mistake it for the two-byte `A5 5A` ACP frame header.
+
+### Windows report capacity probe (safe)
+
+```powershell
+git pull
+py tools/inspect_hid_caps.py
+```
+
+The second script uses Windows `HidD_GetPreparsedData` and `HidP_GetCaps`, opening the HID collection with desired access **zero**. It prints `InputReportByteLength`, `OutputReportByteLength` and `FeatureReportByteLength` without requesting or sending USB reports. This establishes **capacities**, not report IDs or the raw HID descriptor. Exact sizes, HID report IDs, endpoint transport, and ACP packet framing may require a passive ACPWorkbench USBPcap trace.
+
+Windows API reference: https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/hidpi/ns-hidpi-_hidp_caps
