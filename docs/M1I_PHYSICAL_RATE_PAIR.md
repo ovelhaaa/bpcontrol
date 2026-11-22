@@ -1,6 +1,6 @@
-# M1I — dois pares observados de Modulation Rate na BP1032
+# M1I — três pares observados de Modulation Rate na BP1032
 
-**Registro:** 2026-11-22. **Dispositivo:** BP1032 do operador, firmware consultado anteriormente `type 0x30 / v0.3.0 / biblioteca de efeitos 2.24.0`.
+**Registro:** 2026-11-22. **Situação atual: três leituras independentes de BPControl, após configurações no ACPWorkbench.** **Dispositivo:** BP1032 do operador, firmware consultado anteriormente `type 0x30 / v0.3.0 / biblioteca de efeitos 2.24.0`.
 
 ## Evidência obtida sem escrita
 
@@ -93,3 +93,52 @@ de unidades; ela não deve substituir as leituras reais da BP1032.
 
 A segunda imagem foi fornecida na conversa e não foi publicada
 como artefato no repositório, sem solicitação do operador.
+
+
+## Terceira comparação física — ponto intermediário, 5,00 Hz (2026-11-22)
+
+Após a recomendação de testar **5,00 Hz** no ACPWorkbench,
+o operador enviou uma terceira captura da aba `Chorus · Evidências`
+do BPControl e confirmou: **“500, como esperado”**.
+
+A captura mostra **`raw=500`** no campo 3 `Velocidade LFO`, pela
+leitura USB da BP1032. O campo `wet` permaneceu em **80**.
+A configuração correspondente de **5,00 Hz** é contextualizada pelo
+ensaio solicitado imediatamente antes da captura; o número não
+aparece em uma captura adicional do próprio ACPWorkbench.
+
+### Comparação dos três pontos
+
+| ACPWorkbench (relato/ensaio) | BPControl USB (captura) | Razão |
+|---|---:|---:|
+| 2,00 Hz | 200 | 100 raw/Hz |
+| 5,00 Hz | 500 | 100 raw/Hz |
+| 10,00 Hz | 1000 | 100 raw/Hz |
+
+Os **três pontos observados concordam com `f_Hz = raw/100`**
+para a representação de Rate usada pelo ACPWorkbench com a BP1032.
+O terceiro ponto, intermediário, oferece evidência muito mais forte
+de uma conversão linear do que apenas dois extremos.
+
+**O que a triangulação não prova:** que o LFO gerado tenha exatamente
+a frequência apresentada, que todos os valores sejam válidos,
+que a faixa alcance 0–10 Hz como limite efetivo, que o passo mínimo
+seja 0,01 Hz ou que a operação de escrita do BPControl nesse campo
+seja segura.
+
+**Atualização de código:** `chorus_evidence.py` identifica exatamente
+os três valores brutos **200, 500 e 1000** como observações de exibição
+e mantém os demais como hipótese `raw/100`.
+A GUI passa a exibir no cabeçalho o **raw realmente lido**,
+evitando que um texto de calibração estático pareça descrever o
+estado corrente da placa. A coluna numérica exibe apenas o valor
+bruto; limites e ressalvas aparecem no painel de detalhes.
+
+**Segurança:** a terceira leitura **não** autoriza novas escritas.
+O backend ainda permite exclusivamente Guitar Chorus `0x8F`,
+campo 6 `wet`, com confirmação, `±1`, ACK/readback e Undo.
+Campo 3 `modulation_rate` permanece estritamente
+**SOMENTE LEITURA**.
+
+As três imagens permaneceram na conversa; não foram adicionadas
+ao repositório.
