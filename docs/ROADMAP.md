@@ -80,7 +80,8 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Reconcile ACP PingPong delay **ms** with SDK internal delay **samples**, converted by the BP1048 sample firmware; keep the host schema in ms.
 - [x] Operator reports ACPWorkbench displays Chorus rate **2,00 Hz** for the BP1032; physical M1I screenshot shows USB **raw=200**. One paired display point recorded in [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md); supports raw/100 *at that point*, not the entire rate curve. No field3 writes.
 - [x] Second distinct rate pair physically observed: operator set 10.0 Hz in ACPWorkbench and M1I USB returned raw=1000; prior pair 2.00 Hz ↔ raw=200. Both support raw/100 display mapping on BP1032 (2026-11-22). The screenshots are of BPControl; Hz is supplied by operator. Neither global interpolation nor range endpoints nor DSP acoustic rate are proven. Field3 remains read-only. See [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
-- [ ] Validate an additional intermediate point or read-only acoustic check before claiming globally accurate LFO frequency; design separately authorized single-step write plan only after explicit hardware safety review.
+- [x] Intermediate third point tested by operator: after requested ACPWorkbench 5.00 Hz setting, M1I USB screenshot shows field3 raw=500. Three 2/5/10 Hz ↔ raw 200/500/1000 pairs support display raw/100. See [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
+- [ ] Review a distinct physical safety case and protocol rollback plan **before** any proposal to unlock Chorus rate writes. Three readbacks are not write/Undo or DSP acoustic validation.
 - [ ] Test the actual BP1032 PingPong max_delay/quality range before any write; the ms→samples conversion is evidenced only in the BP1048 sample firmware.
 
 ## M2 — UI and resource management
@@ -100,7 +101,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** **M1I rate display mapping has two operator-confirmed physical pairs** on the BP1032: ACPWorkbench 2.00 Hz ↔ BPControl live USB raw=200, then ACPWorkbench set to 10.0 Hz ↔ BPControl live USB raw=1000. Both correspond to 100 raw units/Hz for the displayed control, unlike the different BP1048 SDK API documented raw/10. The full mapping/limits and DSP acoustic frequency remain unmeasured; only these two points are shown as observed Hz in the read-only evidence tab. UI evidence rows have shorter compact labels to address truncation seen in the second screenshot. No new write permissions: Guitar Chorus field3 LFO rate remains strictly read-only; only field6 wet ±1 may be written after confirmed Apply, with ACK/readback and Undo. Source: [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
+**Now:** **M1I Chorus rate mapping has three operator-confirmed BP1032 USB display points**: ACPWorkbench 2.00 Hz ↔ raw200, 5.00 Hz ↔ raw500 (midpoint), and 10.00 Hz ↔ raw1000. All are consistent with 100 raw units per Hz for ACPWorkbench's presentation, unlike the BP1048 SDK's `raw/10`. These observations are **not** evidence of the full valid range, exact audio LFO frequency or BPControl write safety. The M1I read-only evidence tab now labels only observed points as verified and shows the actual latest USB raw in its heading, instead of a stale static calibration line. **Only Guitar Chorus field6 wet** remains writable with the existing ±1 guarded Apply/readback/Undo. **Rate field3 remains read-only.** See [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
