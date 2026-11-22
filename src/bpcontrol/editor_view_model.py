@@ -101,6 +101,23 @@ def display_value_origin(effect_index: int, live_values: tuple[int, ...] | None)
     return "USB / leitura atual" if effect_index == 15 and live_values else "Snapshot salvo"
 
 
+
+def stage_wet_step(live_wet: int, direction: int) -> int:
+    """Prepare exactly one safe candidate locally; NEVER send a USB command.
+
+    The +/- buttons always derive from last confirmed live wet, not from
+    half-edited text, so a stale draft cannot accumulate accidental steps.
+    """
+    if type(live_wet) is not int or not 0 <= live_wet <= 100:
+        raise ValueError("A confirmed live wet 0..100 is required")
+    if type(direction) is not int or direction not in (-1, 1):
+        raise ValueError("Direction must be -1 or +1")
+    target = live_wet + direction
+    if not 0 <= target <= 100:
+        raise ValueError("Candidate would exceed wet 0..100")
+    return target
+
+
 def validate_success_reply(
     mode: str, payload: dict, expected: tuple[int, ...] | None = None,
     target: int | None = None,
