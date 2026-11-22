@@ -60,14 +60,14 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Display every other field in read-only snapshot table, show mapping evidence and errors/uncertain-state lock.
 - [x] Exercise pure draft parsing, ±1 validation, full-state conflicts, lost ACK, failed rollback, drift, worker timeout and bad worker output with offline mocks.
 - [x] M1H: grouped 59-effect navigation/search, dedicated snapshot-vs-live origin, pure ±1 draft preview, in-memory activity history, and stricter 7-field worker reply validation (offline CI passed).
-- [x] Operator physically confirmed M1H manual USB reads twice (Chorus wet=80) and reported Apply control not visible; identified layout ordering and overwide action row as likely causes, corrected in GUI.\n- [ ] Operator visual acceptance of corrected M1H: Chorus editor visible above tabs, −1/+1 staging, Apply/Undo workflow. No expanded write allowlist.
+- [x] Operator physically confirmed M1H manual USB reads twice (Chorus wet=80) and reported Apply control not visible; identified layout ordering and overwide action row as likely causes, corrected in GUI.\n- [x] Operator physically validated corrected M1H end-to-end: explicit USB read wet=80, Apply 80→81 with GUI ACK/readback, Undo 81→80 with ACK/readback, then independent USB read wet=80 (17:59:39–17:59:59, 2026-11-22). Editor controls are operable. No expanded write allowlist.
 - [ ] Later: evaluate one additional Chorus parameter only after establishing its valid range/scaling, UI evidence and reversible write/readback test.\n
-## M1H — inspector UX (implementation complete, physical acceptance pending)
+## M1H — inspector UX (physical happy path accepted)
 - [x] Separate live Chorus value from saved snapshot, show evidence/field origins, and preview pending ±1 changes.
 - [x] Add group filter and an in-memory activity tab with explicit Copy; no automatic telemetry, disk logging or new USB commands.
 - [x] Reject malformed seven-field readback or inconsistent ACK-backed Apply response before presenting success.
 - [x] Add offline tests for source labels, 59-effect filters, staged numeric drafts, and success-response parity.
-- [ ] Validate M1H GUI on BP1032 (M1G already approved, M1H not yet physically checked).
+- [x] Validate corrected M1H GUI on physical BP1032 with read→Apply→Undo→fresh read, all successful according to GUI session history. This does not validate every DPI/layout condition or disconnect handling.
 
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
@@ -86,7 +86,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** M1F write/readback/restore passed on the physical BP1032, and operator accepted both Apply and Undo of M1G on hardware. **M1H has now been implemented and passed offline tests on Windows/Linux; the operator confirmed two successful physical Chorus USB reads (wet=80) but could not see the editing controls.** The editor has been repositioned above the expandable notebook with visible ±1 stage buttons and a separate Apply action row; physical acceptance of the corrected layout is pending. It improves grouped navigation, source labels (snapshot vs USB), a purely local ±1 draft preview, in-memory operation history and strict response validation. The only physically writable field remains Chorus `0x8F` field 6 wet with explicit approval; no flash saves, continuous writes, or additional effect writes. See [M1H_INSPECTOR_UX.md](M1H_INSPECTOR_UX.md).
+**Now:** **M1H corrected GUI is physically accepted for its tested read→Apply→Undo→read path**. The operator reported a GUI session (2026-11-22) with USB read wet=80, explicitly requested Apply wet 80→81 followed by ACK/readback, Undo wet 81→80 followed by ACK/readback, and a new USB read confirming wet=80. The prior hidden-Apply layout issue is resolved sufficiently for the operator to complete this workflow. The only writable field remains Chorus `0x8F` field 6 wet with one-point changes, explicit authorization, firmware gate, seven-field readback and no flash persistence. **Not yet validated:** disconnect/timeout recovery on physical hardware, untested display DPI combinations, other effect parameter writes, MIDI, continuous editing. Proposed next **M1I**: offline evidence review and safe read-only UX for a second candidate parameter, without unlocking new writes. See [M1H_INSPECTOR_UX.md](M1H_INSPECTOR_UX.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
