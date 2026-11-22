@@ -63,6 +63,31 @@ class SnapshotAuditTests(unittest.TestCase):
         self.assertIn("signed_unsigned", [f["code"] for f in report["findings"]])
         self.assertGreater(report["audit_errors"], 0)
 
+    def test_audit_detects_raw_payload_word_discrepancy(self):
+        snapshot = self.synthetic_complete()
+        # Signed and unsigned still agree, but the byte-exact ACP data disagrees.
+        snapshot["effects"][0]["fields"][0]["signed"] = 1
+        snapshot["effects"][0]["fields"][0]["unsigned"] = 1
+        report = audit_snapshot(snapshot, self.catalog)
+        self.assertIn("payload_field_mismatch", [f["code"] for f in report["findings"]])
+        self.assertGreater(report["audit_errors"], 0)
+
+    def test_audit_detects_wrong_firmware_version(self):
+        snapshot = self.synthetic_complete()
+        snapshot["device"]["effects_library_version"] = "2.24.1"
+        report = audit_snapshot(snapshot, self.catalog)
+        self.assertIn("firmware_catalog_mismatch", [f["code"] for f in report["findings"]])
+        self.assertGreater(report["audit_errors"], 0)
+
+    def test_audit_reports_label_quality_per_instance(self):
+        snapshot = self.synthetic_complete()
+        report = audit_snapshot(snapshot, self.catalog)
+        self.assertEqual(len(report["instances"]), 59)
+        self.assertEqual(report["instances"][14]["mapping_level"], "known_schema")
+        self.assertEqual(report["instances"][41]["mapping_level"], "raw_only")
+        self.assertEqual(report["instances"][12]["mapping_level"],
+                         "known_schema_with_inference")
+
     def test_audit_detects_command_mismatch(self):
         snapshot = self.synthetic_complete()
         snapshot["effects"][10]["command"] = "0xFD"
