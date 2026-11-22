@@ -19,11 +19,14 @@ CHORUS_PHYSICAL_BASELINE = (1, 20, 10, 200, 50, 80, 80)
 #
 # Field labels/units: data/effect_instances.json / data/effects.json /
 # src/bpcontrol/effects.py, based on previously supplied ACPWorkbench logs.
-# Manual ACPWorkbench-ENG.pdf §6.1.27 states modulation rate raw/10 Hz
-# (10=1.0Hz, 100=10.0Hz) with documented 0..100 raw limits. Earlier
-# repo docs/ACP_PROTOCOL.md instead states raw 100=1.00Hz; physically
-# observed raw=200 on M1F is beyond the manual's 100 maximum. Firmware
-# and workbench versions might explain the mismatch, but it is UNRESOLVED.
+# ACPWorkbench English manual §6.1.27 AND BP1048 SDK chorus.h v1.1.1
+# both document Chorus rate in TENTHS of Hz (raw 10=1.0 Hz).
+# The V2.40.0 host communication protocol §5.20.27 describes raw 0..100
+# and the BP1048 sample communication.c bounds a write >100 to raw=10.
+# Earlier BPControl documentation claimed raw100=1.0 Hz without
+# sufficient corroboration. Physical BP1032 M1F readback raw=200
+# falls outside those nominal limits; this does NOT prove that
+# physical firmware uses the same SDK implementation or converter.
 # Physical baseline: docs/M1F_FIRST_LIVE_WRITE.md, complete 7-word read.
 # M1H write: docs/M1H_INSPECTOR_UX.md, wet 80 -> 81 -> 80.
 #
@@ -70,10 +73,10 @@ CHORUS_FIELDS: tuple[ChorusField, ...] = (
     ),
     ChorusField(
         3, "modulation_rate", "Velocidade LFO", "Hz: escala divergente",
-        "Manual ACPWorkbench §6.1.27: raw 10=1,0Hz e 100=10,0Hz (raw/10). Repo docs/ACP_PROTOCOL.md: raw 100=1,0Hz (raw/100). CONFLITO.",
-        "Manual: raw 0–100 (0–10Hz); leitura física M1F: raw=200 ultrapassa esse limite; firmware/escalas pendentes",
-        "INI raw=10; log ACPWorkbench escreve 100; M1F lê 200",
-        ("ACPWorkbench-ENG.pdf §6.1.27", "ACPWorkbench.ini [0x8f-Chorus]", "docs/ACP_PROTOCOL.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
+        "Manual ACPWorkbench + SDK BP1048 chorus.h v1.1.1: raw 10=1,0Hz, raw 100=10,0Hz (raw/10). Nota antiga: raw 100=1,0Hz (raw/100), sem confirmação. CONFLITO com placa.",
+        "Protocolo V2.40 §5.20.27: raw 0–100; exemplo SDK reseta escrita >100 para 10. BP1032 lê raw=200. Escala/limite do firmware físico NÃO comprovados.",
+        "INI raw=10; log ACPWorkbench escreve raw=100; BP1032 M1F lê raw=200; sem comparação de Hz de UI",
+        ("docs/M1I_PROTOCOL_SDK_CROSSCHECK.md", "ACPWorkbench-ENG.pdf §6.1.27", "Protocolo V2.40.0 §5.20.27", "bp1048_sdk_v0.1.12: chorus.h / communication.c", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
         4, "feedback", "Feedback", "% (rótulo do schema)",
@@ -112,9 +115,9 @@ def read_only_approximation(index: int, raw: int) -> str:
     if type(raw) is not int or not -32768 <= raw <= 32767:
         raise ValueError("Expected a signed 16-bit raw Chorus word")
     if index == 3:
-        # Both raw/10 (ACPWorkbench manual) and raw/100 (older
-        # BPControl field note) are recorded, but disagree. In
-        # particular raw=200 exceeds manual's stated 0..100 limit.
+        # raw/10 is backed by the manual, protocol nominal range and
+        # BP1048 SDK chorus.h, but raw=200 on the physical BP1032
+        # exceeds those specified limits; never extrapolate to 20Hz.
         return "CONFLITO DE ESCALA · frequência em Hz não confirmada"
     return "Sem conversão independente validada"
 
