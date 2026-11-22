@@ -7,12 +7,12 @@ Data da revisão: 2026-11-22. **Pesquisa documental e inspeção de código some
 1. **\`固件与用户应用程序通信协议V2.40.0.pdf\`**, MVSilicon, edição 2024-06-11, 78 páginas. PDF fornecido pelo operador; não duplicado no repositório.
 2. **\`ACPWorkbench-ENG.pdf\`**, §6.1.27 (Chorus) e §6.1.30 (Ping Pong), e **\`ACPWorkbench.ini\`** fornecidos previamente.
 3. **[SDK BP1048 v0.1.12](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12)**:
-   - [\`chorus.h\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/main/MVsB1_Base_SDK/middleware/audio/inc/chorus.h) (algoritmo Chorus 1.1.1);
-   - [\`pingpong.h\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/main/MVsB1_Base_SDK/middleware/audio/inc/pingpong.h) (algoritmo PingPong 1.4.1);
-   - [\`audio_effect_library.h\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/main/MVsB1_Base_SDK/middleware/audio/inc/audio_effect_library.h) (\`AUDIO_EFFECT_LIBRARY_VERSION "1.35.1"\`);
-   - [\`communication.c\`, \`Communication_Effect_Chorus\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/main/BT_Audio_APP/bt_audio_app_src/audio/communication.c#L4350-L4502);
-   - [\`audio_effect.c\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/main/BT_Audio_APP/bt_audio_app_src/audio/audio_effect.c);
-   - [\`ctrlvars.c\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/main/BT_Audio_APP/bt_audio_app_src/audio/ctrlvars.c#L461-L477).
+   - [\`chorus.h\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/MVsB1_Base_SDK/middleware/audio/inc/chorus.h) (algoritmo Chorus 1.1.1);
+   - [\`pingpong.h\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/MVsB1_Base_SDK/middleware/audio/inc/pingpong.h) (algoritmo PingPong 1.4.1);
+   - [\`audio_effect_library.h\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/MVsB1_Base_SDK/middleware/audio/inc/audio_effect_library.h) (\`AUDIO_EFFECT_LIBRARY_VERSION "1.35.1"\`);
+   - [\`communication.c\`, \`Communication_Effect_Chorus\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/BT_Audio_APP/bt_audio_app_src/audio/communication.c#L4350-L4502);
+   - [\`audio_effect.c\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/BT_Audio_APP/bt_audio_app_src/audio/audio_effect.c);
+   - [\`ctrlvars.c\`](https://github.com/ovelhaaa/bp1048_sdk_v0.1.12/blob/master/BT_Audio_APP/bt_audio_app_src/audio/ctrlvars.c#L461-L477).
 4. **[ESP32 DSP Core / release](https://github.com/Ohminecraft/esp32-dsp-core/tree/release)**: reimplementações C++ em \`src/effects\`, com [Virtual Bass em \`unused/\`](https://github.com/Ohminecraft/esp32-dsp-core/blob/release/unused/effects/virtual_bass.cpp).
 5. **Capturas BP1032** da M1F e M1H: firmware 0x30, versão 0.3.0, \`effects_library_version=2.24.0\`, Chorus físico \`[1,20,10,200,50,80,80]\`, wet \`80→81→80\` validado por ACK/readback.
 
@@ -86,7 +86,7 @@ Com BPControl **fechado**, abrir ACPWorkbench e observar o valor exibido de *Mod
 
 ## Resultados e limitações
 
-- A consulta dos três repositórios e do protocolo foi feita **offline/no GitHub**, sem acesso à placa.
+- Os arquivos do SDK e da adaptação ESP32 foram consultados **no GitHub**; o PDF foi analisado localmente. **Nenhuma conexão USB com a placa** foi realizada nesta revisão.
 - As notas de \`chorus.h\` são evidência da API documentada, e o código \`communication.c\` é evidência da *aplicação de exemplo BP1048*, não do código-fonte da firmware física BP1032.
 - As diferenças de unidade no PingPong estão explicadas por uma ponte ms→samples documentada no código-fonte do SDK.
 - O único ensaio de escrita BPControl aprovado na placa permanece Chorus **wet ±1** com ACK, readback e Undo.
