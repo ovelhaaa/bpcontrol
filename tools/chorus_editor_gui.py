@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from bpcontrol.chorus_editor import parse_wet_draft, validate_editor_target
 from bpcontrol.editor_view_model import (
-    GROUPS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
+    GROUPS, GROUP_LABELS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
     evidence_label, display_value_origin, validate_success_reply,
 )
 from bpcontrol.snapshot import read_catalog
@@ -190,7 +190,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
              bg=SIDEBAR, fg="#B4ABA1", font=("Segoe UI", 8)).place(x=19, y=151)
     group = tk.StringVar(value="Todos")
     group_picker = ttk.Combobox(
-        left, textvariable=group, state="readonly", values=GROUPS,
+        left, textvariable=group, state="readonly", values=[GROUP_LABELS[g] for g in GROUPS],
         font=("Segoe UI", 10),
     )
     group_picker.place(x=18, y=173, width=255, height=32)
@@ -291,9 +291,12 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         tree.heading(key, text=text)
         tree.column(key, width=width, anchor=anchor, stretch=key=="name")
     tree_scroll = ttk.Scrollbar(tree_area, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=tree_scroll.set)
-    tree.pack(side="left", fill="both", expand=True)
+    horizontal_scroll = ttk.Scrollbar(tree_area, orient="horizontal", command=tree.xview)
+    tree.configure(yscrollcommand=tree_scroll.set,
+                   xscrollcommand=horizontal_scroll.set)
+    horizontal_scroll.pack(side="bottom", fill="x")
     tree_scroll.pack(side="right", fill="y")
+    tree.pack(side="left", fill="both", expand=True)
 
     activity_scroll = tk.Scrollbar(activity_area)
     activity_scroll.pack(side="right", fill="y")
@@ -460,7 +463,12 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             choose_effect(visible_indices[active[0]])
 
     def filter_list(*_):
-        visible_indices[:] = filter_effect_indices(effects, search.get(), group.get())
+        selected_group = next(
+            (key for key in GROUPS if GROUP_LABELS[key] == group.get()), "Todos"
+        )
+        visible_indices[:] = filter_effect_indices(
+            effects, search.get(), selected_group
+        )
         list_count.configure(
             text=f"{len(visible_indices)} DE {group_counts['Todos']} INSTÂNCIAS · SNAPSHOT"
         )
