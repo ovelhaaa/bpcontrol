@@ -241,8 +241,7 @@ requires an explicit expected current wet value, and uses a killable worker
 watchdog. A timeout/disconnection can prevent restoration. It never persists
 to flash or writes any other effect/parameter.
 
-**This NEW live-write probe has passed offline tests but has NOT yet been
-validated on the physical BP1032.** Only run after reviewing the safety notes,
+**The M1F probe succeeded on the physical BP1032 on 2026-11-22** (both ACKs validated, wet 80→79→80, all 7 fields restored by readback). It remains a tightly restricted experiment; only run further tests after reviewing the safety notes,
 with ACPWorkbench closed and audio muted:
 
 ```powershell
@@ -260,3 +259,37 @@ verify wet using ACPWorkbench and restore manually if needed.
 
 Read [`docs/M1F_FIRST_LIVE_WRITE.md`](docs/M1F_FIRST_LIVE_WRITE.md)
 for the precise safeguards, limitations, and acceptance criteria.
+
+
+## Verified M1F physical milestone — 2026-11-22
+
+The first **BPControl-initiated write** to the physical BP1032 passed:
+
+```text
+Ran 84 tests in 0.448s
+OK
+
+status: PASS_RESTORED
+baseline:            [1, 20, 10, 200, 50, 80, 80]
+candidate_wet:       79
+candidate_readback:  [1, 20, 10, 200, 50, 80, 79]
+restoration_readback:[1, 20, 10, 200, 50, 80, 80]
+candidate_ack_valid: true
+restoration_ack_valid: true
+restoration_verified: true
+errors: []
+```
+
+**What is proven:** Windows HID read/write for one known effect field, its
+ACK envelope, immediate readback of the modification and exact readback
+of restored seven-field state. No flash persist/firmware write.
+
+**What is not proven:** disconnected or interrupted rollback on hardware,
+arbitrary effect writes, continuous sliders, safe concurrent ACPWorkbench
+access, persistence or MIDI transport. The temporary M1F test should not
+be mistaken for a general-purpose live editor.
+
+Next: M1G staged numeric editing (draft text stored locally, Apply/Enter
+only, validated field ranges, fresh readback and conflict detection).
+See [M1F_FIRST_LIVE_WRITE.md](docs/M1F_FIRST_LIVE_WRITE.md) and
+[ROADMAP.md](docs/ROADMAP.md).
