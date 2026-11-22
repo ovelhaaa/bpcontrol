@@ -170,3 +170,28 @@ field counts versus INI hints, raw ACP bytes versus signed/unsigned values, and
 separates known schemas from inferred names or raw-only fields. No edits are
 unlocked by a passing audit. See
 [`docs/M1D_SNAPSHOT_AUDIT.md`](docs/M1D_SNAPSHOT_AUDIT.md).
+
+## M1D audit passed; M1E write preparation (NO LIVE WRITES)
+
+The owner-reported 2026-11-22 audit on the physical BP1032 snapshot shows
+**59/59 effect readbacks, 845 signed/unsigned raw words, 6/6 studied schemas
+matching field counts, 53 raw-only instances, zero field-count mismatches,
+zero audit errors or warnings**. This structural pass does not validate
+musical units, parameter ranges or the safety of effect writes. The full
+snapshot JSON has not been independently reviewed in this repository.
+
+A new, intentionally **offline-only** script builds a proposal for one
+reversible Guitar Chorus wet adjustment (maximum 1 raw unit) without
+opening HID or communicating with the board:
+
+```powershell
+cd C:\\progs\\bpcontrol
+git pull
+py tools/plan_chorus_probe.py artifacts/snapshots/bp1032-01.json
+```
+
+The user or local agent must first capture a legitimate ACPWorkbench
+single-field write with USBPcap to establish the **actual HID ACK envelope**.
+Only then should we implement and explicitly authorize a supervised live
+write/readback/restore experiment. No live writes are enabled yet.
+See [M1E preparation](docs/M1E_FIRST_WRITE_PREPARATION.md).
