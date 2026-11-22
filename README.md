@@ -112,3 +112,42 @@ fails, retain the error output and do not automatically repeat.
 ## M1A physical device status
 
 The owner verified all three read-only commands on 2026-11-22: Chorus `0x8F`, firmware `0x00`, and status `0x02`. Confirmed firmware `0.3.0`, effects library `2.24.0`, RAM `70/320 KB`, **CPU `26 MCPS`**. Manual §8.1 defines MCPS as *mega cycles per second*, not MIPS; relative to the reported 320 MHz maximum, 26 MCPS is 8.1% of nominal cycle capacity, **not a guaranteed instantaneous CPU-utilization metric**. See [M1_PHYSICAL_FIRMWARE_STATUS.md](docs/M1_PHYSICAL_FIRMWARE_STATUS.md).
+
+## M1C — 59 effects + offline explorer (NEW)
+
+The `ACPWorkbench.ini` export identifies **59 distinct instances**, with
+commands `0x81..0xBB`, each with its own name, type ID and parameter-name
+**hints**. They are catalogued in [`data/effect_instances.json`](data/effect_instances.json).
+INI values are **not live measurements**. The UI never fabricates values for
+unread effects or treats unverified field names as measured.
+
+The **59-effect batch has NOT been physically tested yet**. It uses the same
+HID MI_04 EP0 transport proven by individual reads, with a strict firmware
+allowlist (`0x30` / `0.3.0` / effects `2.24.0`), one read per instance,
+45-second supervisor timeout, no retry, and hard stop on a malformed reply.
+
+Try the offline UI first (only previously measured Chorus, firmware and
+status shown; 58 effects explicitly unread):
+
+```powershell
+cd C:\\progs\\bpcontrol
+git pull
+py -m pip install -e .
+py -m unittest discover -s tests -v
+py tools/render_snapshot.py data/demo_snapshot.json --open
+```
+
+Then, **with ACPWorkbench closed** and only when you choose to test the batch:
+
+```powershell
+py tools/snapshot_windows.py --live-read-all --output artifacts/snapshots/bp1032-01.json
+py tools/render_snapshot.py artifacts/snapshots/bp1032-01.json --open
+```
+
+The collector generates a local JSON file; the renderer generates a standalone
+HTML report (no web service, no USB calls from the browser). No effects are
+modified or saved, and `artifacts/` is excluded from Git. If the collector
+stops at an unexpected effect response, **do not rerun automatically**;
+inspect the partial JSON and the reported index.
+
+Full procedure: [`docs/M1C_59_EFFECT_SNAPSHOT.md`](docs/M1C_59_EFFECT_SNAPSHOT.md).
