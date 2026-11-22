@@ -29,3 +29,5 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Render demo snapshot offline (no USB access)
         run: python tools/render_snapshot.py data/demo_snapshot.json --output artifacts/ci-demo.html
+      - name: Audit demo snapshot offline (no USB access)
+        run: python tools/audit_snapshot.py data/demo_snapshot.json --table
