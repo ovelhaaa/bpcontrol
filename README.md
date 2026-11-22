@@ -121,7 +121,7 @@ commands `0x81..0xBB`, each with its own name, type ID and parameter-name
 INI values are **not live measurements**. The UI never fabricates values for
 unread effects or treats unverified field names as measured.
 
-The **59-effect batch has NOT been physically tested yet**. It uses the same
+The owner reported the **59-effect batch and offline HTML worked on the physical BP1032** on 2026-11-22. The actual JSON has not yet been independently inspected. It uses the same
 HID MI_04 EP0 transport proven by individual reads, with a strict firmware
 allowlist (`0x30` / `0.3.0` / effects `2.24.0`), one read per instance,
 45-second supervisor timeout, no retry, and hard stop on a malformed reply.
@@ -151,3 +151,22 @@ stops at an unexpected effect response, **do not rerun automatically**;
 inspect the partial JSON and the reported index.
 
 Full procedure: [`docs/M1C_59_EFFECT_SNAPSHOT.md`](docs/M1C_59_EFFECT_SNAPSHOT.md).
+
+## M1D — Audit the 59-effect snapshot (NO USB)
+
+If your local batch completed, audit the same saved JSON; do not query the
+board again merely for this stage.
+
+```powershell
+cd C:\\progs\\bpcontrol
+git pull
+py tools/audit_snapshot.py artifacts/snapshots/bp1032-01.json
+py tools/audit_snapshot.py artifacts/snapshots/bp1032-01.json --table
+py tools/audit_snapshot.py artifacts/snapshots/bp1032-01.json --json > artifacts/snapshots/bp1032-01-audit.json
+```
+
+This checks all 59 instance IDs/commands, firmware compatibility, per-instance
+field counts versus INI hints, raw ACP bytes versus signed/unsigned values, and
+separates known schemas from inferred names or raw-only fields. No edits are
+unlocked by a passing audit. See
+[`docs/M1D_SNAPSHOT_AUDIT.md`](docs/M1D_SNAPSHOT_AUDIT.md).
