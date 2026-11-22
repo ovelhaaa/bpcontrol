@@ -1,5 +1,13 @@
 # BP1032 USB discovery: Windows observations
 
+## Update: passive USB evidence — 2026-11-22
+
+See [USB_CAPTURE_REPORT.md](USB_CAPTURE_REPORT.md) for two captured Guitar Chorus
+reads confirming interface 4, Control EP0, SET_REPORT/GET_REPORT, report ID field
+zero and 256-byte report data with ACP at offset zero. Windows capacities are
+257/257/9 bytes as reported by the owner. Earlier candidate-only statements below
+describe the discovery history; raw HID descriptors remain uncaptured.
+
 ## Device identity — confirmed by the owner
 
 The BP1032 appears as a USB composite device with VID `0x1235` and PID `0x0003`.

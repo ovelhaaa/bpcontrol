@@ -2,6 +2,15 @@
 
 ACPWorkbench's text log shows ACP **application frames**, not raw USB reports.
 
+## Passive capture result — 2026-11-22
+
+[USB_CAPTURE_REPORT.md](USB_CAPTURE_REPORT.md) now confirms MI_04, Control EP0,
+SET_REPORT Output / GET_REPORT Input, ID field zero, 256-byte USB report data,
+ACP at offset zero and zero padding, including two complete Guitar Chorus reads.
+The remaining checklist below is historical where that report resolves a question.
+Descriptors, physical packet segmentation, reconnect/timeout behavior and a tested
+Windows API implementation remain open. No active transport was executed.
+
 Collect evidence for the exact board:
 1. VID/PID, interface class/subclass/protocol, interface and endpoint descriptors.
 2. HID report IDs, input/output report sizes and any padding.
