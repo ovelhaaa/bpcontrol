@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>BPControl · Snapshot Reader</title>
+<style>
+:root{--bg:#f5f1e9;--surface:#fffdf9;--ink:#252524;--muted:#77766f;--line:#ddd7cc;--dark:#252627;--orange:#ef6426;--success:#2d846b;--warning:#ab712a;--radius:13px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);font-size:14px}
+button,input{font:inherit}button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:310px minmax(0,1fr)}
+.side{background:var(--dark);color:#f4f1ed;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh}
+.sideTop{padding:26px 24px 17px;border-bottom:1px solid #484747}
+.logo{font-size:27px;letter-spacing:-1.4px;font-weight:830}.logo strong{color:#ff793a}.subtitle{font-size:11px;text-transform:uppercase;letter-spacing:1.9px;color:#afaead;margin-top:3px}
+.sideBody{padding:19px 15px 20px;display:flex;min-height:0;flex:1;flex-direction:column}
+.find{padding:12px 13px;border:1px solid #55544e;border-radius:10px;background:#333432;color:white;outline:none;width:100%}
+.find:focus{border-color:var(--orange)}
+.groupButtons{display:flex;gap:7px;flex-wrap:wrap;padding:15px 0}
+.groupButtons button{background:#363735;border:1px solid #53534e;color:#cfcdc8;font-size:12px;padding:7px 11px;border-radius:20px}
+.groupButtons button.active{background:var(--orange);border-color:var(--orange);color:#171615;font-weight:700}
+.count{font-size:11px;color:#b3b0aa;letter-spacing:1px;padding:5px 8px 12px}
+.effectList{overflow:auto;padding-right:3px;display:grid;align-content:start;gap:4px}
+.effectButton{border:0;display:flex;align-items:center;gap:11px;background:transparent;color:#d5d1c9;text-align:left;padding:10px;border-radius:9px;width:100%}
+.effectButton:hover{background:#3e403e}.effectButton.selected{background:#4c4139;box-shadow:inset 3px 0 var(--orange);color:white}
+.effectCode{font:12px ui-monospace,Consolas,monospace;color:#f89a6c;white-space:nowrap}
+.effectLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;flex:1}
+.tinyStatus{width:6px;height:6px;border-radius:50%;background:#777;flex:none}
+.tinyStatus.ok{background:#5fc2a0}.tinyStatus.error{background:#ec8a61}
+.sideFoot{border-top:1px solid #484747;padding:16px 23px;color:#bdbbb5;font-size:12px;line-height:1.5}
+.sideFoot b{color:#f0d5be}.main{min-width:0;padding:32px clamp(20px,4vw,64px);max-width:1550px;width:100%;margin:0 auto}
+.topline{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:24px}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--orange);font-weight:800}
+h1{font-size:clamp(27px,3vw,44px);margin:7px 0 8px;letter-spacing:-1.8px;line-height:1.05}p{line-height:1.55}
+.desc{color:var(--muted);margin:0;font-size:13px}
+.readonly{display:inline-flex;align-items:center;gap:7px;border:1px solid #d7b69d;color:#84451f;font-size:11px;letter-spacing:1px;font-weight:750;border-radius:22px;padding:9px 13px;background:#fff2e8}
+.readonly:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.alert{padding:13px 17px;background:#f6e6d1;border-left:3px solid #d78e43;border-radius:7px;margin-bottom:25px;font-size:12px;line-height:1.5}
+.kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:30px}
+.kpiCard{background:var(--surface);border:1px solid var(--line);padding:18px 20px;border-radius:var(--radius);min-height:128px}
+.kpiCaption{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpiValue{font-size:29px;font-weight:800;margin-top:10px;letter-spacing:-.8px}
+.kpiSub{font-size:11px;color:var(--muted);margin-top:3px}
+.progress{width:100%;height:5px;border-radius:8px;background:#eee4d7;margin-top:12px;overflow:hidden}
+.progress>div{height:100%;background:var(--orange);width:0%;border-radius:8px}
+.panel{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);overflow:hidden;margin-bottom:22px}
+.panelHead{padding:24px 27px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:start;gap:20px;flex-wrap:wrap}
+.sectionKicker{text-transform:uppercase;color:var(--muted);letter-spacing:1.5px;font-size:11px;font-weight:700}
+.effectTitle{font-weight:800;letter-spacing:-.8px;font-size:29px;margin:7px 0}
+.panelDesc{color:var(--muted);font-size:12px;margin:0}
+.chip{background:#efe8dd;border-radius:22px;padding:8px 12px;white-space:nowrap;font-size:11px;color:#55514c;font-weight:700}
+.chip.ok{background:#e0f2ea;color:#237358}.chip.error{background:#f8e0d9;color:#a0472a}
+.panelBody{padding:18px 27px 30px}
+.fieldHeading{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:1px;font-weight:700}
+.fieldGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:11px}
+.field{border:1px solid #e5ded3;border-radius:10px;padding:16px 17px;background:#fff}
+.fieldName{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.fieldSub{font-size:11px;color:var(--muted);margin-top:4px}
+.fieldValue{font-size:26px;font-weight:780;letter-spacing:-.4px;margin-top:17px;font-variant-numeric:tabular-nums}
+.fieldValue em{font-size:13px;font-style:normal;color:#999087;margin-left:5px;font-weight:500}
+.fieldConfidence{display:inline-block;margin-top:10px;font-size:10px;background:#f6eee4;border-radius:5px;padding:4px 6px;color:#85684e}
+.empty{padding:42px 12px;text-align:center;color:#77736c;line-height:1.6}
+.tech{margin:0 27px 24px;border-top:1px solid var(--line);padding-top:18px}
+.tech summary{cursor:pointer;font-size:12px;font-weight:700}
+pre{white-space:pre-wrap;word-break:break-word;background:#252627;color:#f1ddc6;padding:15px;border-radius:8px;font:12px/1.7 ui-monospace,Consolas,monospace}
+.footerNote{font-size:12px;color:var(--muted);max-width:800px;line-height:1.6}
+@media(max-width:1100px){.kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.app{grid-template-columns:260px 1fr}}
+@media(max-width:720px){.app{display:block}.side{position:relative;height:auto;min-height:0}.sideTop{padding:18px}.sideBody{padding:13px}.effectList{max-height:250px}.sideFoot{display:none}.main{padding:20px 14px}.panelHead{padding:20px}.panelBody{padding:20px}.tech{margin:0 20px 20px}.kpiCard{min-height:118px;padding:14px}}
+@media(max-width:390px){.kpi{grid-template-columns:1fr 1fr}.kpiValue{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="sideTop"><div class="logo">BP<strong>CONTROL</strong></div><div class="subtitle">MVSilicon · USB HID · Snapshot</div></div>
+    <div class="sideBody">
+      <input id="search" class="find" placeholder="Buscar efeito, comando…" aria-label="Buscar efeito">
+      <div id="groups" class="groupButtons"></div>
+      <div id="effectCount" class="count"></div>
+      <nav id="effectList" class="effectList" aria-label="Instâncias DSP"></nav>
+    </div>
+    <div class="sideFoot">Status do projeto: <b>somente leitura</b><br>Sem conexão USB ou comandos de escrita nesta interface.</div>
+  </aside>
+  <main class="main">
+    <div class="topline">
+      <div><div class="kicker">BP1032 / Inspect workspace</div><h1>Arquitetura de efeitos</h1>
+      <p class="desc" id="stamp">Snapshot offline · dados carregados do arquivo local</p></div>
+      <span class="readonly">READ ONLY · V1</span>
+    </div>
+    <div id="alert" class="alert" hidden></div>
+    <div id="kpi" class="kpi"></div>
+    <article class="panel" aria-live="polite">
+      <header class="panelHead"><div><div class="sectionKicker" id="effectMeta">Instância ACP</div>
+        <h2 class="effectTitle" id="effectTitle">Selecione um efeito</h2>
+        <p class="panelDesc" id="effectDesc"></p></div><span class="chip" id="effectStatus"></span></header>
+      <div class="panelBody"><div class="fieldHeading"><span>Parâmetros da instância</span><span id="fieldsCount"></span></div>
+      <div id="fields" class="fieldGrid"></div></div>
+      <details class="tech"><summary>Dados brutos / detalhes de diagnóstico</summary><pre id="raw"></pre></details>
+    </article>
+    <p class="footerNote" id="footnote"></p>
+  </main>
+</div>
+<script type="application/json" id="snapshotData">__BPCONTROL_JSON__</script>
+<script>
+'use strict';
+const snapshot=JSON.parse(document.getElementById('snapshotData').textContent);
+const entries=Array.isArray(snapshot.effects)?snapshot.effects:[];
+const $=id=>document.getElementById(id);
+let selected=entries.find(e=>e.status==='ok')?.index??entries[0]?.index??null;
+let group='Todos', query='';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const displayName=s=>String(s??'').replace(/^[^:]+:/,'').replace(/^\s+/,'').trim();
+const n=(x,d=0)=>typeof x==='number'&&Number.isFinite(x)?x.toLocaleString('pt-BR',{maximumFractionDigits:d}):'—';
+function filter(){
+ return entries.filter(e=>(group==='Todos'||e.group===group)&&
+  (e.name+' '+e.command+' '+e.type_name+' '+e.index).toLowerCase().includes(query));
+}
+function renderGroups(){
+ const all=['Todos',...new Set(entries.map(e=>e.group).filter(Boolean))];
+ $('groups').innerHTML=all.map(g=>'<button type="button" data-group="'+esc(g)+'" class="'+(g===group?'active':'')+'">'+esc(g)+'</button>').join('');
+ [...$('groups').querySelectorAll('button')].forEach(b=>b.addEventListener('click',()=>{group=b.dataset.group;renderGroups();renderList()}));
+}
+function renderList(){
+ const rows=filter();
+ $('effectCount').textContent=rows.length+' / '+entries.length+' INSTÂNCIAS';
+ $('effectList').innerHTML=rows.map(e=>
+   '<button type="button" class="effectButton '+(e.index===selected?'selected':'')+'" data-index="'+e.index+'">'+
+   '<span class="effectCode">'+esc(e.command)+'</span>'+
+   '<span class="effectLabel" title="'+esc(e.name)+'">'+esc(displayName(e.name))+'</span>'+
+   '<span class="tinyStatus '+esc(e.status)+'"></span></button>').join('');
+ [...$('effectList').querySelectorAll('button')].forEach(b=>b.addEventListener('click',()=>{selected=Number(b.dataset.index);renderList();renderSelected()}));
+}
+function metric(label,value,sub,pct){
+ return '<div class="kpiCard"><div class="kpiCaption">'+esc(label)+'</div><div class="kpiValue">'+esc(value)+'</div><div class="kpiSub">'+esc(sub)+'</div>'+
+ (pct==null?'':'<div class="progress"><div style="width:'+Math.max(0,Math.min(100,pct))+'%"></div></div>')+'</div>';
+}
+function renderKpi(){
+ const s=snapshot.system||{},d=snapshot.device||{};
+ $('kpi').innerHTML=[
+  metric('Processamento',s.cpu_mcps==null?'—':n(s.cpu_mcps)+' MCPS',s.cpu_nominal_max_percent==null?'Referência nominal':n(s.cpu_nominal_max_percent,1)+'% do teto nominal',s.cpu_nominal_max_percent),
+  metric('Memória',s.memory_kb==null?'—':n(s.memory_kb)+' KB',s.memory_max_kb==null?'Limite desconhecido':n(s.memory_max_kb)+' KB disponíveis',s.memory_percent),
+  metric('Firmware',d.firmware_version||'—','DSP Library '+(d.effects_library_version||'—'),null),
+  metric('Efeitos lidos',String(snapshot.effect_count_read??0)+' / '+entries.length,snapshot.complete?'Snapshot completo':'Snapshot parcial / exemplo',entries.length?100*(snapshot.effect_count_read||0)/entries.length:null),
+ ].join('');
+ const alert=$('alert');
+ if(!snapshot.complete){alert.hidden=false;alert.textContent=snapshot.error?
+   'Captura interrompida: '+snapshot.error+' · Os efeitos não lidos não foram inventados.':
+   'Visualização parcial/histórica: ainda não foi capturado um snapshot completo das 59 instâncias.'}
+ $('stamp').textContent=(snapshot.created_at_utc||'Sem data')+' · '+(snapshot.source||'origem desconhecida')+' · Somente leitura';
+ $('footnote').textContent=snapshot.notice||'Os nomes são metadados do INI; os valores vêm de uma captura de leitura. Nenhuma alteração é realizada na BP1032.';
+}
+function renderSelected(){
+ const e=entries.find(x=>x.index===selected);
+ if(!e)return;
+ $('effectMeta').textContent='#'+String(e.index).padStart(2,'0')+' · '+e.command+' · '+(e.group||'Sem grupo');
+ $('effectTitle').textContent=displayName(e.name);
+ $('effectDesc').textContent='Tipo de algoritmo: '+e.type_name+' · Código de tipo (INI): '+e.type_id;
+ const badge=$('effectStatus');badge.className='chip '+(e.status==='ok'?'ok':e.status==='error'?'error':'');
+ badge.textContent=e.status==='ok'?'LEITURA VÁLIDA':e.status==='error'?'ERRO NA LEITURA':'AINDA NÃO LIDO';
+ $('fieldsCount').textContent=(e.fields?.length||0)+' CAMPOS';
+ const fields=$('fields');fields.innerHTML='';
+ if(e.status!=='ok'||!e.fields?.length){
+   fields.innerHTML='<div class="empty">'+esc(e.error||'Nenhum parâmetro lido nesta instância. Não há valores presumidos.')+'</div>';
+ }else{
+   for(const f of e.fields){
+     const box=document.createElement('div');box.className='field';
+     const title=document.createElement('div');title.className='fieldName';title.textContent=f.name;
+     const hint=document.createElement('div');hint.className='fieldSub';
+     hint.textContent=f.ini_hint&&f.ini_hint!==f.name?'INI: '+f.ini_hint:'Campo '+String(f.index).padStart(2,'0');
+     const val=document.createElement('div');val.className='fieldValue';val.textContent=n(f.signed);
+     const unit=document.createElement('em');unit.textContent=' '+(f.unit||'raw');val.appendChild(unit);
+     const conf=document.createElement('div');conf.className='fieldConfidence';
+     conf.textContent=f.mapping==='unknown'?'sem escala validada':'mapeamento: '+f.mapping;
+     const unsigned=document.createElement('div');unsigned.className='fieldSub';unsigned.textContent='u16: '+f.unsigned+' / s16: '+f.signed;
+     box.append(title,hint,val,unsigned,conf);fields.appendChild(box);
+   }
+ }
+ $('raw').textContent='ACP: '+(e.command||'—')+'\nStatus: '+e.status+
+  '\nPayload: '+(e.raw_payload_hex||'não disponível')+
+  '\nTipo INI: '+(e.type_name||'não disponível')+
+  '\nMapeamento por esquema validado: '+(e.schema_match===true?'sim':e.schema_match===false?'não':'não lido')+
+  '\n'+(e.error?'Erro: '+e.error:'');
+}
+$('search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();renderList()});
+renderGroups();renderList();renderKpi();renderSelected();
+</script>
+</body>
+</html>
