@@ -27,3 +27,5 @@ jobs:
         run: python -m pip install -e .
       - name: Run offline tests (no USB access)
         run: python -m unittest discover -s tests -v
+      - name: Render demo snapshot offline (no USB access)
+        run: python tools/render_snapshot.py data/demo_snapshot.json --output artifacts/ci-demo.html
