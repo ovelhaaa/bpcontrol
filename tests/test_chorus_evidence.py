@@ -44,7 +44,9 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertIn("2,00 Hz", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("raw/100", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("raw=1000", CHORUS_FIELDS[3].scale_evidence)
+        self.assertIn("raw=500", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("10,00 Hz", CHORUS_FIELDS[3].scale_evidence)
+        self.assertIn("5,00 Hz", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("raw/10", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("raw=200", CHORUS_FIELDS[3].range_evidence)
 
@@ -54,6 +56,7 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertIn("Protocolo V2.40", rate.range_evidence)
         self.assertIn("raw=200", rate.range_evidence)
         self.assertIn("raw=1000", rate.range_evidence)
+        self.assertIn("raw=500", rate.range_evidence)
         self.assertIn("10", rate.range_evidence)
         self.assertIn("docs/M1I_PROTOCOL_SDK_CROSSCHECK.md", rate.evidence_sources)
         self.assertIn("docs/M1I_PHYSICAL_RATE_PAIR.md", rate.evidence_sources)
@@ -61,22 +64,24 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertEqual(rate.permission_label, "SOMENTE LEITURA")
         self.assertTrue(CHORUS_FIELDS[6].writable_now)
 
-    def test_only_two_operator_observed_rate_pairs_are_displayed_in_hz(self):
+    def test_only_three_operator_observed_rate_pairs_are_displayed_in_hz(self):
         observed = {
             200: "2,00 Hz · ponto observado na BP1032 (raw=200)",
+            500: "5,00 Hz · ponto observado na BP1032 (raw=500)",
             1000: "10,00 Hz · ponto observado na BP1032 (raw=1000)",
         }
         for raw, expected in observed.items():
             with self.subTest(raw=raw):
                 self.assertEqual(read_only_approximation(3, raw), expected)
-        for raw in (0, 10, 100, 199, 201, 500, 999, 1001, -1):
+        for raw in (0, 10, 100, 199, 201, 499, 501, 999, 1001, -1):
             with self.subTest(raw=raw):
                 result = read_only_approximation(3, raw)
                 self.assertIn("hipótese", result)
                 self.assertNotIn(" Hz", result)
-        # The two observations support this numerical ratio but not an
+        # The three observations support this numerical ratio but not an
         # automatic claim about arbitrary or physical boundary values.
-        self.assertEqual(200/2.0, 1000/10.0)
+        self.assertEqual(200/2.0, 500/5.0)
+        self.assertEqual(500/5.0, 1000/10.0)
         with self.assertRaises(ValueError):
             read_only_approximation(3, 32768)
         with self.assertRaises(ValueError):
@@ -94,6 +99,10 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertEqual(live[6]["snapshot_raw"], 80)
         self.assertEqual(live[6]["current_origin"], "USB / leitura atual")
         self.assertEqual([x["index"] for x in live if x["writable_now"]], [6])
+        middle_rate = (1, 20, 10, 500, 50, 80, 80)
+        middle = evidence_rows(self.record, middle_rate)
+        self.assertIn("5,00 Hz", middle[3]["approximation"])
+        self.assertEqual(middle[3]["permission"], "SOMENTE LEITURA")
         high_rate = (1, 20, 10, 1000, 50, 80, 80)
         observed = evidence_rows(self.record, high_rate)
         self.assertEqual(observed[3]["current_raw"], 1000)
