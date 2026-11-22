@@ -99,6 +99,12 @@ def run_worker_once(mode: str, expected: tuple[int, ...] | None = None,
             "error": f"Invalid HID worker reply (exit {child.returncode}); "
                      "do not automatically retry.",
         }
+    if child.returncode != 0 and payload["status"] in ("READ_OK", "APPLIED_VERIFIED"):
+        return {
+            "status": "STATE_UNCERTAIN" if mode == "apply" else "READ_ERROR",
+            "error": f"Worker exit code {child.returncode} contradicts success status; "
+                     "state must be independently verified.",
+        }
     return payload
 
 
