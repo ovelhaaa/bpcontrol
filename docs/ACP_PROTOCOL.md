@@ -12,7 +12,22 @@ A5 5A CMD LEN [LEN bytes of payload] 16
 
 ## Known values
 - Pitch Shifter Pro: 70 => +7 semitones, 120 => +12.
-- Chorus rate: 100 => 1.00 Hz.
+- **Chorus modulation rate has a scaling conflict, NOT a verified
+  conversion.** ACPWorkbench English manual §6.1.27 (PDF page 27)
+  defines raw 2=0.2Hz, 10=1.0Hz, 100=10.0Hz and a 0..100 nominal raw
+  range (0.1Hz steps). An earlier BPControl note interpreted raw
+  100=1.00Hz (raw/100), and the physical BP1032 M1F baseline included
+  raw **200**, outside the manual's stated 0..100 range. The ACPWorkbench
+  INI uses raw 10 and an ACPWorkbench USB log captured a raw 100
+  write. Treat all those as separate observations; do not claim a
+  definitive frequency or enable rate writes until reconciled.
+- **Chorus nominal ranges per the manual (§6.1.27):** Delay Length
+  1..25 ms; Modulation Depth 0..(delay_length−1) ms; Feedback 0..50%;
+  Dry and Wet 0..100%. These are documentation-level limits, not
+  completed hardware boundary tests for firmware HunXiang_F.
+- **PingPong warning:** the same manual §6.1.30 describes `Delay`
+  in samples, whereas the earlier BPControl schema labeled it
+  milliseconds. Treat that unit as unresolved too before writing.
 - Echo and PingPong gain: approximately `int(32768 * 10**(dB/20))` for -6, -7, -8 dB.
 - Mic Echo field 04 is **unknown**; readback-only `max_delay` fields are locked in the observed UI.
 - Most individual Pro Reverb labels are **inferred, not independently confirmed**.
