@@ -75,10 +75,11 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Disable Chorus field3 write hints and mark its unit raw/inferred; keep only wet field6 authorized by existing runtime code. Update data/effects.json with unresolved scale rather than a definite conversion.
 - [x] Add read-only “Chorus · Evidências” tab with seven raw fields, manual limits, snapshot/live origin, evidence sources and write permission indicators.
 - [x] Add offline tests protecting manual range source, unresolved scale, and wet-only permission. CI Windows/Linux green.
-- [ ] Operator UI review of M1I evidence tab (no new physical writes).
+- [x] Operator provided screenshot of M1I physical BP1032 Chorus evidence tab: live USB field3 raw=200, wet=80, read-only field3 visible (2026-11-22).
 - [x] Cross-check protocol V2.40, `chorus.h`, `pingpong.h`, sample `communication.c`, `ctrlvars.c`, and Ohminecraft ESP32 adaptation; findings in [M1I_PROTOCOL_SDK_CROSSCHECK.md](M1I_PROTOCOL_SDK_CROSSCHECK.md).
 - [x] Reconcile ACP PingPong delay **ms** with SDK internal delay **samples**, converted by the BP1048 sample firmware; keep the host schema in ms.
-- [ ] Resolve **physical BP1032** Chorus rate scale using sequential ACPWorkbench display + BPControl raw readback, with zero writes and no simultaneous controllers.
+- [x] Operator reports ACPWorkbench displays Chorus rate **2,00 Hz** for the BP1032; physical M1I screenshot shows USB **raw=200**. One paired display point recorded in [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md); supports raw/100 *at that point*, not the entire rate curve. No field3 writes.
+- [ ] Validate BP1032 rate mapping at a second distinct value by safe read-only cross-application comparison before asserting global linearity or enabling a rate editor.
 - [ ] Test the actual BP1032 PingPong max_delay/quality range before any write; the ms→samples conversion is evidenced only in the BP1048 sample firmware.
 
 ## M2 — UI and resource management
@@ -98,7 +99,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** M1H live Chorus wet read→Apply→Undo→read is operator-accepted on physical BP1032. **M1I is implemented and passes offline Windows/Linux tests but is not yet UI-reviewed on the user's Windows PC.** Reinspection of supplied ACPWorkbench English manual §6.1.27 uncovered nominal ranges for all six numeric Chorus fields; importantly it contradicts the earlier rate-scale note. Manual says raw10=1.0Hz and raw100=10.0Hz, while previous BPControl notes suggest raw100=1.0Hz and the physical board read raw200. Chorus rate now remains RAW/UNRESOLVED, non-writable. The new read-only evidence tab documents every parameter, nominal manual bounds and source confidence. The **only** writable effect field remains Guitar Chorus wet `0x8F`/6 in confirmed ±1 steps; no flash save. See [M1I_CHORUS_MANUAL_RECONCILIATION.md](M1I_CHORUS_MANUAL_RECONCILIATION.md).
+**Now:** M1H live Chorus wet read→Apply→Undo→read is operator-accepted on physical BP1032. **M1I read-only evidence view has been reviewed on the operator's physical BP1032**, including USB field3 raw=200 and an operator-reported ACPWorkbench display of 2,00 Hz. This supports a physical raw/100 *display point*, not a general calibration or safe rate writes. Reinspection of supplied ACPWorkbench English manual §6.1.27 uncovered nominal ranges for all six numeric Chorus fields; importantly it contradicts the earlier rate-scale note. Manual says raw10=1.0Hz and raw100=10.0Hz, while previous BPControl notes suggest raw100=1.0Hz and the physical board read raw200. Chorus rate now has **one paired display point (raw 200 ↔ 2,00 Hz)**, while its global conversion/range remains unverified and field3 remains non-writable. The new read-only evidence tab documents every parameter, nominal manual bounds and source confidence. The **only** writable effect field remains Guitar Chorus wet `0x8F`/6 in confirmed ±1 steps; no flash save. See [M1I_CHORUS_MANUAL_RECONCILIATION.md](M1I_CHORUS_MANUAL_RECONCILIATION.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
