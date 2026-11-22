@@ -32,6 +32,17 @@ def audit_snapshot(snapshot: dict, catalog: dict) -> dict:
 
     findings = []
     statuses = Counter()
+    meta = snapshot.get("device") or {}
+    expected_versions = (
+        catalog.get("firmware_type"),
+        catalog.get("firmware_version"),
+        catalog.get("effects_library_version"),
+    )
+    got_versions = (
+        meta.get("firmware_type"),
+        meta.get("firmware_version"),
+        meta.get("effects_library_version"),
+    )
     field_count = 0
     schema_mapped = 0
     mismatches = 0
@@ -43,6 +54,14 @@ def audit_snapshot(snapshot: dict, catalog: dict) -> dict:
             "index": index, "severity": severity, "code": code, "detail": detail
         })
 
+    if expected_versions != got_versions:
+        report(0, "error", "firmware_catalog_mismatch",
+               f"catalog versions {expected_versions}, snapshot versions {got_versions}; "
+               "cannot safely associate field names")
+    if snapshot.get("effect_count_expected") != len(expected):
+        report(0, "error", "expected_count",
+               f"effect_count_expected={snapshot.get('effect_count_expected')}; "
+               f"catalog={len(expected)}")
     for expected_row, effect in zip(expected, entries):
         index = effect.get("index")
         if index != expected_row["index"] or index in seen:
@@ -109,6 +128,33 @@ def audit_snapshot(snapshot: dict, catalog: dict) -> dict:
                 report(expected_row["index"], "error", "signed_unsigned",
                        f"field {position}: signed={signed}, unsigned={unsigned}")
 
+        # Confirm the JSON fields correspond exactly to the saved, byte-exact ACP payload.
+        # Valid bytes do not, by themselves, prove an INI hint or field range.
+        raw_hex = effect.get("raw_payload_hex")
+        if not isinstance(raw_hex, str):
+            report(expected_row["index"], "error", "missing_raw_payload",
+                   "successful read has no raw ACP payload")
+        else:
+            try:
+                payload = bytes.fromhex(raw_hex)
+            except ValueError:
+                report(expected_row["index"], "error", "invalid_raw_payload",
+                       "raw_payload_hex is not hexadecimal")
+            else:
+                if (not payload or payload[0] != 0xFF or
+                        len(payload) != 1 + 2 * len(fields) or
+                        len(payload) > 251):
+                    report(expected_row["index"], "error", "raw_payload_length",
+                           f"payload bytes={len(payload)}; fields={len(fields)}")
+                else:
+                    for position, field in enumerate(fields):
+                        word = field.get("unsigned")
+                        if (type(word) is int and 0 <= word <= 65535
+                                and payload[1 + position * 2:3 + position * 2]
+                                    != word.to_bytes(2, "little")):
+                            report(expected_row["index"], "error", "payload_field_mismatch",
+                                   f"field {position} differs from captured ACP bytes")
+
     count_ok = statuses["ok"]
     declared_read = snapshot.get("effect_count_read")
     if declared_read != count_ok:
@@ -116,6 +162,9 @@ def audit_snapshot(snapshot: dict, catalog: dict) -> dict:
                f"effect_count_read={declared_read}, but ok={count_ok}")
     if snapshot.get("complete") and count_ok != 59:
         report(0, "error", "incomplete_flag", "complete=true while fewer than 59 read successfully")
+    if not snapshot.get("complete") and count_ok == 59:
+        report(0, "warning", "all_read_but_partial",
+               "59 successful reads but snapshot says complete=false; review its error state")
     return {
         "complete": snapshot.get("complete") is True,
         "declared_read": declared_read,
