@@ -27,4 +27,8 @@ A5 5A CMD LEN [LEN bytes of payload] 16
 
 Baseline with PingPong off: 65 KB. RAM rises approximately linearly with maximum buffer length; displayed MCPS changed little with buffer size. These data **do not prove** an internal sample format or precise CPU cost.
 
-**Transport remains unknown:** ACPWorkbench textual logs do not establish USB VID/PID, HID report IDs, endpoint, report sizes, padding, fragmentation, or feature-vs-interrupt mechanism.
+**USB transport now established:** owner USBPcap trace and one-shot Windows physical reads confirm HID MI_04, control EP0, SET_REPORT Output + GET_REPORT Input, Report ID 0, 256-byte data reports with ACP at offset 0 and zero padding. See [USB_CAPTURE_REPORT.md](USB_CAPTURE_REPORT.md) and [M1_PHYSICAL_FIRMWARE_STATUS.md](M1_PHYSICAL_FIRMWARE_STATUS.md).
+
+## CPU status unit
+
+The ACP protocol v2.40.0 §5.3 calls the 16-bit system-status field `CPU Usage` without stating its unit. The ACPWorkbench English manual v2.25.0 §8.1 (p. 33) **explicitly defines MCPS as mega cycles per second**. Physical BP1032 status returns raw `26`, interpreted as **26 MCPS**. MCPS is not MIPS. Dividing 26 MCPS by the reported maximum clock 320 MHz yields 8.125% of nominal maximum cycle throughput, but should not be labeled a measured instantaneous CPU percentage.
