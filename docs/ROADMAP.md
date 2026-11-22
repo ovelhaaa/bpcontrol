@@ -12,7 +12,8 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Review owner-supplied official ACPWorkbench manual, V2.40.0 communication specification and exported INI.
 - [x] Implement 0x02 status parsing with physical fixture and MCPS unit.
 - [x] Extract 59 instance names/types/parameter hints from owner-supplied ACPWorkbench.ini (not proof of current values).
-- [x] Implement offline structural M1D auditor with raw-byte/word parity checks and 59-instance mapping-confidence table.\n- [ ] Review actual user snapshot to reconcile 59 readbacks against INI hints and official parameter ranges.
+- [x] Implement offline structural M1D auditor with raw-byte/word parity checks and 59-instance mapping-confidence table.
+- [x] Operator-run M1D audit output: 59/59, 845 raw parameter fields, 0 INI field-count discrepancies, 0 audit errors/warnings (2026-11-22).\n- [ ] Validate per-field semantics, musical scaling and parameter ranges using independent protocol/UI evidence; full raw JSON remains local.
 - [ ] Correct Echo quality mode (0..2); reconcile Chorus rate scaling vs UI evidence.
 
 ## M1A — Windows USB discovery (read-only, no reflash)
@@ -28,10 +29,11 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Implement opt-in, one-shot, no-retry firmware `0x00` and status `0x02` readers with offline tests.
 - [x] Verify firmware and status reads on physical board; decode observed values from official protocol v2.40.0 and ACPWorkbench MCPS unit. See [M1_PHYSICAL_FIRMWARE_STATUS.md](M1_PHYSICAL_FIRMWARE_STATUS.md).
 - [x] Implement one bounded 59-effect snapshot with strict version gate, explicit opt-in, fail-closed reports and offline tests.
-- [x] Operator reports successful physical batch read and HTML visualization (2026-11-22).\n- [ ] Independently audit actual saved 59-effect JSON and confirm 59/59 success; no automatic retries.
+- [x] Operator reports successful physical batch read and HTML visualization (2026-11-22).
+- [x] User supplied complete M1D console output confirming 59/59 reads with 845 words and 0 structural errors/warnings.\n- [ ] Independently inspect the saved raw JSON when provided; continue to avoid automatic USB retries.
 - [ ] Robust reconnect handling and cancellation across UI workflows. Do not open ACPWorkbench simultaneously.
 
-## M1B — Safe controls
+## M1E — First write preparation (no live writes yet)\n- [x] Add offline-only Chorus wet ±1 proposal with strict live-snapshot audit gate and byte-exact rollback frames.\n- [x] Add regression tests refusing partial/corrupt snapshots or incompatible firmware.\n- [ ] Passively capture one real ACPWorkbench Chorus wet write and the USB HID ACK, then restore its original value.\n- [ ] Implement narrowly whitelisted, operator-approved single write + readback + verified rollback only after ACK transport is confirmed.\n\n## M1B — Safe controls
 - [ ] Guarded, user-approved write on a known parameter, with readback verification, rollback to prior value and safe interruption behavior.
 - [ ] Never emit `0xFD` persist/save, `0xFE` firmware upgrade, factory reset or unknown/reserved writes in the default transport.
 - [ ] Acknowledge application-layer ACK is not proof of persistent configuration.
@@ -54,6 +56,6 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** user reports that the 59-effect read batch and offline viewer worked on the physical BP1032. The actual output JSON has not been inspected here. M1D offline audit is available: `py tools/audit_snapshot.py artifacts/snapshots/bp1032-01.json`. Next input is the audit summary/table and any flagged effects; no new USB query required. All effect writes remain disabled.
+**Now:** the user-run M1D audit is **clean: 59/59 effects, 845 raw words, six matching schemas, zero count mismatches, zero audit errors and warnings**. This proves structural consistency only, not all parameter semantics. The offline M1E Chorus wet ±1 proposal is available; **no BPControl effect writes have been enabled**. Next evidence is one passive USBPcap capture of an ACPWorkbench single-field write/ACK and verified restoration. See [M1E_FIRST_WRITE_PREPARATION.md](M1E_FIRST_WRITE_PREPARATION.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
