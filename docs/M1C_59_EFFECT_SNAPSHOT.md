@@ -23,7 +23,7 @@ All are application-level read requests with empty payloads; HID still uses
 one SET_REPORT Output and one GET_REPORT Input for each.
 
 Physical board validation from previous stages: `0x8F`, `0x00`, `0x02`
-**passed**. The new **59-effect bulk read has NOT been hardware tested yet**.
+**passed**. The owner later reported that the **59-effect bulk read and offline visualizer worked** (2026-11-22); the actual JSON has not yet been reviewed independently. Continue with [M1D snapshot audit](M1D_SNAPSHOT_AUDIT.md).
 
 ## Safety gates
 
@@ -70,7 +70,7 @@ When comfortable, use one intentional **hardware** snapshot:
 py tools/snapshot_windows.py --live-read-all --output artifacts/snapshots/bp1032-01.json
 ```
 
-Expected successful summary (illustrative, **not** a hardware result yet):
+Expected successful summary (illustrative; reported successful by the operator, exact terminal output not provided):
 
 ```text
 Saved: artifacts/snapshots/bp1032-01.json
