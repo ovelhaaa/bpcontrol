@@ -32,6 +32,7 @@ from bpcontrol.chorus_editor import parse_wet_draft, validate_editor_target
 from bpcontrol.editor_view_model import (
     GROUPS, GROUP_LABELS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
     evidence_label, display_value_origin, validate_success_reply,
+    stage_wet_step,
 )
 from bpcontrol.snapshot import read_catalog
 from tools.audit_snapshot import audit_snapshot
@@ -322,11 +323,13 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
 
     editor = tk.Frame(main, bg=PANEL, highlightthickness=1,
                       highlightbackground=LINE, padx=18, pady=14)
-    editor.pack(fill="x", pady=(17, 12))
+    # The controls must precede the expanding notebook in the pack order.
+    # Otherwise small windows/DPI scaling can clip the entire editor.
+    editor.pack(fill="x", pady=(8, 10), before=tablebox)
     editor_top = tk.Frame(editor, bg=PANEL)
     editor_top.pack(fill="x")
     tk.Label(
-        editor_top, text="CHORUS · WET / CAMPO 06",
+        editor_top, text="ALTERAR CHORUS WET · CAMPO 06",
         bg=PANEL, fg=INK, font=("Segoe UI", 11, "bold"),
     ).pack(side="left")
     editor_state = tk.Label(
@@ -353,36 +356,50 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
 
     editrow = tk.Frame(editor, bg=PANEL)
     editrow.pack(fill="x", pady=(14, 7))
-    tk.Label(editrow, text="Novo valor (%)", bg=PANEL, fg=MUTED).pack(side="left")
+    tk.Label(editrow, text="VALOR A APLICAR (%)", bg=PANEL, fg=MUTED,
+             font=("Segoe UI", 9, "bold")).pack(side="left")
     draft = tk.StringVar(value="")
     entry = tk.Entry(
         editrow, textvariable=draft, width=9, justify="center",
         font=("Segoe UI", 15, "bold"), relief="solid", bd=1, fg=INK,
         insertbackground=INK,
     )
-    entry.pack(side="left", padx=(15, 10), ipady=6)
+    entry.pack(side="left", padx=(10, 10), ipady=6)
+    minus_btn = tk.Button(
+        editrow, text="−1", bg="#E8E0D4", fg=INK, relief="flat",
+        font=("Segoe UI", 11, "bold"), padx=12, pady=8, cursor="hand2",
+    )
+    minus_btn.pack(side="left", padx=(0, 5))
+    plus_btn = tk.Button(
+        editrow, text="+1", bg="#E8E0D4", fg=INK, relief="flat",
+        font=("Segoe UI", 11, "bold"), padx=12, pady=8, cursor="hand2",
+    )
+    plus_btn.pack(side="left", padx=(0, 10))
     apply_btn = tk.Button(
-        editrow, text="Aplicar", bg=ORANGE, fg="white", relief="flat",
+        editrow, text="APLICAR NA PLACA", bg=ORANGE, fg="white", relief="flat",
         activebackground="#D7521B", activeforeground="white",
-        padx=19, pady=11, cursor="hand2",
+        font=("Segoe UI", 10, "bold"), padx=13, pady=11, cursor="hand2",
     )
-    apply_btn.pack(side="left", padx=4)
+    apply_btn.pack(side="left")
+
+    secondary_row = tk.Frame(editor, bg=PANEL)
+    secondary_row.pack(fill="x", pady=(4, 2))
     undo_btn = tk.Button(
-        editrow, text="Desfazer último Apply", bg="#3B3C3B", fg="white",
-        relief="flat", padx=12, pady=11, cursor="hand2",
+        secondary_row, text="Desfazer último Apply", bg="#3B3C3B", fg="white",
+        relief="flat", padx=12, pady=7, cursor="hand2",
     )
-    undo_btn.pack(side="left", padx=4)
+    undo_btn.pack(side="left", padx=(0, 9))
     cancel_btn = tk.Button(
-        editrow, text="Cancelar rascunho", bg="#E8E0D4",
-        fg=INK, relief="flat", padx=10, pady=11, cursor="hand2",
+        secondary_row, text="Cancelar rascunho", bg="#E8E0D4",
+        fg=INK, relief="flat", padx=10, pady=7, cursor="hand2",
     )
-    cancel_btn.pack(side="left", padx=4)
+    cancel_btn.pack(side="left")
     hint = tk.Label(
         editor, bg=PANEL, fg=MUTED, justify="left", anchor="w",
         wraplength=810, font=("Segoe UI", 9),
-        text=("Nenhum comando é emitido durante digitação, Backspace ou perda de foco. "
-              "Aplicar exige valor inteiro e diferença EXATA de 1 ponto. "
-              "A mudança é volátil; não é salva em flash."),
+        text=("Use −1 / +1 para PREPARAR o próximo valor, sem comunicação USB. "
+              "Só APLICAR envia uma mudança de um ponto, após sua confirmação. "
+              "Nada é gravado na flash."),
     )
     hint.pack(anchor="w", pady=(5, 0))
     preview = tk.Label(
@@ -397,7 +414,8 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         bg=BG, wraplength=900, justify="left",
         font=("Segoe UI", 10),
     )
-    status.pack(anchor="w", pady=(7, 2))
+    # Keep the latest hardware status above the scrolling/expanding table.
+    status.pack(anchor="w", pady=(7, 4), before=tablebox)
 
     def set_status(message, fg=MUTED):
         status.configure(text=message, fg=fg)
@@ -491,8 +509,16 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         button_read = editing and allow_live and not busy[0] and not locked[0]
         refresh_button.configure(state="normal" if button_read else "disabled")
         entry.configure(state="normal" if enabled else "disabled")
+        minus_btn.configure(
+            state="normal" if enabled and manual_live[0][6] > 0 else "disabled"
+        )
+        plus_btn.configure(
+            state="normal" if enabled and manual_live[0][6] < 100 else "disabled"
+        )
         apply_btn.configure(
-            state="normal" if enabled and assessment.can_apply else "disabled"
+            state="normal" if enabled and assessment.can_apply else "disabled",
+            bg=ORANGE if enabled and assessment.can_apply else "#BEAEA3",
+            disabledforeground="#F9F3EC",
         )
         cancel_btn.configure(state="normal" if enabled else "disabled")
         undo_btn.configure(
@@ -702,6 +728,23 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             return
         run_operation("apply", old[6], undo=True)
 
+    def stage_clicked(direction: int):
+        """Stage only a local numeric draft. Explicit Apply is a separate click."""
+        if (selected[0] != 15 or not allow_live or busy[0] or locked[0]
+                or manual_live[0] is None):
+            return
+        try:
+            target = stage_wet_step(manual_live[0][6], direction)
+        except ValueError as exc:
+            set_status(f"Não foi possível preparar alteração: {exc}", RED)
+            return
+        draft.set(str(target))
+        set_status(
+            f"Preparado localmente: wet={manual_live[0][6]} → {target}. "
+            "Clique APLICAR NA PLACA para confirmar; nenhum comando enviado.",
+            MUTED,
+        )
+
     def cancel_clicked():
         if manual_live[0] is not None:
             draft.set(str(manual_live[0][6]))
@@ -738,6 +781,8 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     draft.trace_add("write", on_draft_edit)
     entry.bind("<Return>", return_key)
     refresh_button.configure(command=read_clicked)
+    minus_btn.configure(command=lambda: stage_clicked(-1))
+    plus_btn.configure(command=lambda: stage_clicked(1))
     apply_btn.configure(command=apply_clicked)
     undo_btn.configure(command=undo_clicked)
     cancel_btn.configure(command=cancel_clicked)
