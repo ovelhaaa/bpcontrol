@@ -195,3 +195,31 @@ single-field write with USBPcap to establish the **actual HID ACK envelope**.
 Only then should we implement and explicitly authorize a supervised live
 write/readback/restore experiment. No live writes are enabled yet.
 See [M1E preparation](docs/M1E_FIRST_WRITE_PREPARATION.md).
+
+## M1E USB write ACK evidence (passive only)
+
+BPControl still cannot change DSP parameters. An offline USBPcap analyzer can
+inspect one **operator-driven ACPWorkbench** Chorus wet change and restoration,
+including the actual HID `GET_REPORT` ACK envelope. The utility only reads
+local PCAP files.
+
+In an **administrator** PowerShell, with BPControl HID tools closed:
+
+```powershell
+git pull
+py tools/capture_usb_passive.py --scenario chorus-wet-ack --seconds 60 --output artifacts/usb-capture/chorus-wet-01.pcapng
+```
+
+During the capture, open ACPWorkbench, read the current Chorus wet value,
+move it by 1 point, read back, restore the original, and read back again.
+Do not save to flash or update firmware. Then analyze offline:
+
+```powershell
+py tools/analyze_chorus_write_ack.py artifacts/usb-capture/chorus-wet-01.pcapng --output artifacts/usb-capture/chorus-wet-01-ack.json
+```
+
+The script prints wet write values, matching `GET_REPORT` packet positions,
+ACK shapes, and whether there is a *post-restoration readback*. If any part
+is missing, do not assume a successful rollback. See
+[`docs/M1E_USB_ACK_CAPTURE.md`](docs/M1E_USB_ACK_CAPTURE.md). The raw
+capture stays under Git-ignored `artifacts/` and should not be posted publicly.
