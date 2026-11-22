@@ -409,9 +409,11 @@ py -m unittest discover -s tests -v
 py tools/chorus_editor_gui.py
 ```
 
-Open **Chorus · Evidências** in the offline GUI. The ambiguous
-modulation-rate field should say **CONFLITO DE ESCALA**; the six
-other Chorus fields remain read-only. Normal wet Apply and Undo use
+Open **Chorus · Evidências** in the offline GUI. The Rate field now
+records an **operator-reported paired point: USB raw=200 and ACPWorkbench
+display=2.00 Hz**. This supports raw/100 only at that one point; no
+general calibration or new write permissions. The six other
+Chorus fields remain read-only. Normal wet Apply and Undo use
 the unchanged, physically validated M1H backend, but they are not
 needed to review this new tab.
 
@@ -437,3 +439,23 @@ USB HID/ACP client for the BP1032 and not the same proprietary firmware.
 
 Full provenance, source links, precautions and a safe read-only probe plan:
 [`docs/M1I_PROTOCOL_SDK_CROSSCHECK.md`](docs/M1I_PROTOCOL_SDK_CROSSCHECK.md).
+
+## M1I physical rate evidence — 2026-11-22
+
+The operator supplied a screenshot of the M1I **Chorus · Evidências**
+tab showing a genuine Windows USB readback of **Guitar Chorus field3
+raw=200**, and reported that ACPWorkbench displays **2.00 Hz** for
+the same parameter.
+
+This is **one paired display observation supporting raw/100 on
+the installed BP1032**; it is not a measurement of the full curve,
+maximum/minimum rate, or guaranteed LFO acoustic frequency. The older
+BP1048 SDK's raw/10 scaling and raw 0..100 limits must not be
+silently applied to the different physical firmware.
+
+The read-only UI now shows **2,00 Hz** only for an actual raw word
+of **200**, explicitly citing this observation. Other rate values
+remain raw with a scale-pending message; the field3 write API remains
+disabled. Only Chorus wet field6 ±1 is writable on deliberate Apply.
+
+See [`docs/M1I_PHYSICAL_RATE_PAIR.md`](docs/M1I_PHYSICAL_RATE_PAIR.md).
