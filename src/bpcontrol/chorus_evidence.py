@@ -19,13 +19,16 @@ CHORUS_PHYSICAL_BASELINE = (1, 20, 10, 200, 50, 80, 80)
 #
 # Field labels/units: data/effect_instances.json / data/effects.json /
 # src/bpcontrol/effects.py, based on previously supplied ACPWorkbench logs.
-# Protocol: docs/ACP_PROTOCOL.md observes only raw 100 = 1.00 Hz for rate.
+# Manual ACPWorkbench-ENG.pdf §6.1.27 states modulation rate raw/10 Hz
+# (10=1.0Hz, 100=10.0Hz) with documented 0..100 raw limits. Earlier
+# repo docs/ACP_PROTOCOL.md instead states raw 100=1.00Hz; physically
+# observed raw=200 on M1F is beyond the manual's 100 maximum. Firmware
+# and workbench versions might explain the mismatch, but it is UNRESOLVED.
 # Physical baseline: docs/M1F_FIRST_LIVE_WRITE.md, complete 7-word read.
 # M1H write: docs/M1H_INSPECTOR_UX.md, wet 80 -> 81 -> 80.
 #
-# No independently verified full operating limits for fields 0..5 are
-# shipped. For wet, 0..100 is the guard used by current BPControl, NOT a
-# measured complete device range.
+# ACPWorkbench manual ranges are documentation, not proven limits on
+# this firmware. M1I does not grant hardware write permission from docs.
 @dataclass(frozen=True)
 class ChorusField:
     index: int
@@ -46,50 +49,50 @@ class ChorusField:
 CHORUS_FIELDS: tuple[ChorusField, ...] = (
     ChorusField(
         0, "enable", "Ativação", "flag 0/1 (mapeamento)",
-        "Rótulo/flag provenientes do mapeamento ACPWorkbench; domínio completo não ensaiado",
-        "Não validada experimentalmente em BPControl",
+        "Flag enable observada como 1 no readback; não é ensaio de limites",
+        "Flag de habilitação tipicamente 0/1; manual não fornece faixa no §6.1.27",
         "1 no baseline físico M1F",
         ("data/effect_instances.json", "data/effects.json", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
         1, "delay_length", "Delay length", "ms (rótulo do schema)",
-        "Unidade ms indicada pelo mapeamento; conversão independente pendente",
-        "Não determinada nesta firmware",
+        "Manual ACPWorkbench-ENG §6.1.27: Delay Length medido em milissegundos",
+        "Faixa do manual: 1–25 ms; ainda não validada nos limites físicos",
         "20 bruto no baseline físico M1F",
         ("src/bpcontrol/effects.py", "docs/OBSERVATIONS.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
         2, "modulation_depth", "Profundidade", "ms (rótulo do schema)",
-        "Unidade ms indicada pelo mapeamento; conversão independente pendente",
-        "Não determinada nesta firmware",
+        "Manual ACPWorkbench-ENG §6.1.27: Modulation Depth em milissegundos",
+        "Faixa do manual: 0 até (delay_length−1) ms; dependência não testada",
         "10 bruto no baseline físico M1F",
         ("src/bpcontrol/effects.py", "docs/OBSERVATIONS.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
-        3, "modulation_rate", "Velocidade LFO", "Hz (raw/100, hipótese fora da amostra)",
-        "Observação documentada: raw 100 = 1,00 Hz; linearidade fora desse ponto pendente",
-        "Não determinada nesta firmware",
-        "200 bruto no baseline físico M1F",
-        ("docs/ACP_PROTOCOL.md", "data/effects.json", "docs/M1F_FIRST_LIVE_WRITE.md"),
+        3, "modulation_rate", "Velocidade LFO", "Hz: escala divergente",
+        "Manual ACPWorkbench §6.1.27: raw 10=1,0Hz e 100=10,0Hz (raw/10). Repo docs/ACP_PROTOCOL.md: raw 100=1,0Hz (raw/100). CONFLITO.",
+        "Manual: raw 0–100 (0–10Hz); leitura física M1F: raw=200 ultrapassa esse limite; firmware/escalas pendentes",
+        "INI raw=10; log ACPWorkbench escreve 100; M1F lê 200",
+        ("ACPWorkbench-ENG.pdf §6.1.27", "ACPWorkbench.ini [0x8f-Chorus]", "docs/ACP_PROTOCOL.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
         4, "feedback", "Feedback", "% (rótulo do schema)",
-        "Unidade % indicada pelo mapeamento; limites pendentes",
-        "Não determinada nesta firmware",
+        "Manual ACPWorkbench §6.1.27 indica porcentagem",
+        "Faixa do manual: 0–50%; ainda não testada nos extremos",
         "50 bruto no baseline físico M1F",
         ("src/bpcontrol/effects.py", "docs/OBSERVATIONS.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
         5, "dry", "Nível dry", "% (rótulo do schema)",
-        "Unidade % indicada pelo mapeamento; limites pendentes",
-        "Não determinada nesta firmware",
+        "Manual ACPWorkbench §6.1.27 indica porcentagem",
+        "Faixa do manual: 0–100%; ainda não testada nos extremos",
         "80 bruto no baseline físico M1F",
         ("src/bpcontrol/effects.py", "docs/OBSERVATIONS.md", "docs/M1F_FIRST_LIVE_WRITE.md"),
     ),
     ChorusField(
         6, "wet", "Nível wet", "% (rótulo do schema)",
-        "Raw=80/81 com escrita, ACK e readback físico. Não prova toda a escala.",
-        "0..100 é limite preventivo do software; faixa física completa não comprovada",
+        "Manual ACPWorkbench §6.1.27 indica porcentagem; raw 80/81 confirmado fisicamente",
+        "Faixa do manual: 0–100%; BPControl aceita apenas mudanças ±1 (wet)",
         "80→79→80 M1F; 80→81→80 M1H, todos por readback",
         ("docs/M1F_FIRST_LIVE_WRITE.md", "docs/M1H_INSPECTOR_UX.md"),
         writable_now=True,
@@ -109,9 +112,10 @@ def read_only_approximation(index: int, raw: int) -> str:
     if type(raw) is not int or not -32768 <= raw <= 32767:
         raise ValueError("Expected a signed 16-bit raw Chorus word")
     if index == 3:
-        if raw == 100:
-            return "1,00 Hz · ponto documentado"
-        return f"≈{raw/100:.2f} Hz · extrapolação NÃO validada"
+        # Both raw/10 (ACPWorkbench manual) and raw/100 (older
+        # BPControl field note) are recorded, but disagree. In
+        # particular raw=200 exceeds manual's stated 0..100 limit.
+        return "CONFLITO DE ESCALA · frequência em Hz não confirmada"
     return "Sem conversão independente validada"
 
 
