@@ -155,6 +155,41 @@ def audit_snapshot(snapshot: dict, catalog: dict) -> dict:
                             report(expected_row["index"], "error", "payload_field_mismatch",
                                    f"field {position} differs from captured ACP bytes")
 
+    per_instance = []
+    for expected_row, effect in zip(expected, entries):
+        fields = effect.get("fields")
+        schema = SCHEMA_BY_INDEX.get(expected_row["index"])
+        status = effect.get("status")
+        observed_count = len(fields) if isinstance(fields, list) else None
+        ini_count = len(expected_row.get("parameter_hints", []))
+        confirmed_mapping = (
+            status == "ok" and schema is not None and
+            observed_count == len(schema.params) and
+            effect.get("schema_match") is True
+        )
+        inferred_fields = (
+            sum(p.evidence == "inferred" for p in schema.params)
+            if confirmed_mapping else 0
+        )
+        per_instance.append({
+            "index": expected_row["index"],
+            "command": expected_row["command"],
+            "name": expected_row["name"],
+            "type_name": expected_row["type_name"],
+            "status": status,
+            "observed_fields": observed_count,
+            "ini_hints": ini_count,
+            "known_schema": schema is not None,
+            "schema_matched": confirmed_mapping,
+            "inferred_fields": inferred_fields,
+            "mapping_level": (
+                "not_read" if status != "ok" else
+                "known_schema_with_inference" if confirmed_mapping and inferred_fields else
+                "known_schema" if confirmed_mapping else
+                "raw_only"
+            ),
+        })
+
     count_ok = statuses["ok"]
     declared_read = snapshot.get("effect_count_read")
     if declared_read != count_ok:
@@ -178,13 +213,18 @@ def audit_snapshot(snapshot: dict, catalog: dict) -> dict:
         "audit_errors": sum(f["severity"] == "error" for f in findings),
         "audit_warnings": sum(f["severity"] == "warning" for f in findings),
         "findings": findings,
+        "instances": per_instance,
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit BP1032 read-only snapshot JSON (NO USB)")
     parser.add_argument("snapshot", type=Path)
-    parser.add_argument("--json", action="store_true", help="print machine-readable audit report")
+    format_group = parser.add_mutually_exclusive_group()
+    format_group.add_argument("--json", action="store_true",
+                              help="print machine-readable audit report")
+    format_group.add_argument("--table", action="store_true",
+                              help="print one summary line for each of the 59 instances")
     args = parser.parse_args()
     try:
         obj = json.loads(args.snapshot.read_text(encoding="utf-8"))
@@ -194,6 +234,17 @@ def main() -> int:
         return 2
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
+    elif args.table:
+        print("BPCONTROL M1D — PARAMETER COUNTS (offline, never writes to DSP)")
+        print(" ID  ACP   LIVE   INI  LABEL QUALITY                  EFFECT")
+        print(" --  ----  -----  ---  -----------------------------  --------------------------------")
+        for row in report["instances"]:
+            count = str(row["observed_fields"]) if row["observed_fields"] is not None else "—"
+            print(f" {row['index']:02d}  {row['command']:4}  {count:>5}  "
+                  f"{row['ini_hints']:>3}  {row['mapping_level']:<29}  "
+                  f"{row['name'][:38]}")
+        print(f"Audit errors={report['audit_errors']}, warnings={report['audit_warnings']}; "
+              "see --json for details. None of these labels authorizes writes.")
     else:
         print("BPCONTROL M1D — OFFLINE AUDIT (no USB / no writes)")
         print(f"Snapshot marked complete: {report['complete']}")
