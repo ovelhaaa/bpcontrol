@@ -51,11 +51,11 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [ ] Introduce local presets only after reliable read/write is proven.
 
 ## M1G — UI editing, staged not streaming
-- [ ] Implement an editable Chorus wet field with local draft state; digits, Backspace and focus changes MUST NOT transmit intermediate values.
-- [ ] Apply explicitly on Enter or button only, with numeric range check and fresh baseline comparison.
-- [ ] Add single-shot confirmed change with readback and no flash save; separate deliberate persistent UI edits from the temporary write/restore probe.
-- [ ] Make every unvalidated parameter read-only; add per-field evidence and recovery status.
-- [ ] Exercise UI cancellation, invalid inputs, stale values, errors and disconnects with offline fakes before any new physical write.\n\n## M2 — UI and resource management
+- [x] Implement a desktop M1G prototype with 59-effect snapshot browser; Chorus wet numeric draft is local and typing/Backspace/focus changes never send ACP (offline tests passed).
+- [x] Apply only on explicit Enter/button plus user confirmation; integer 0..100, exactly ±1 per change, firmware and full 7-field double readback before write (offline tested).
+- [x] Implement one volatile single-shot edit with readback, separate user-approved Undo, and one attempted restoration on error; never flash save (offline tested).\n- [ ] Physically validate GUI-originated Apply and Undo on BP1032 (M1G not yet proven on hardware).
+- [x] Display every other field in read-only snapshot table, show mapping evidence and errors/uncertain-state lock.
+- [x] Exercise pure draft parsing, ±1 validation, full-state conflicts, lost ACK, failed rollback, drift, worker timeout and bad worker output with offline mocks.\n- [ ] Validate real GUI interactions and refine styling/UX after physical M1G acceptance.\n\n## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
 - [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
 - [ ] 0x02 system status telemetry (CPU and RAM) validated against ACPWorkbench.
@@ -72,7 +72,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** M1F has **passed on the physical BP1032** (operator terminal evidence, 2026-11-22). The firmware-gated Windows HID probe changed exactly one Chorus wet field **80→79**, verified both the candidate and restoration ACK/readback, and returned all seven fields to their initial values **80** and the original tuple. **84 offline unit tests passed**. This validates the known happy path only; disconnection/timeouts and arbitrary parameter writes are not proven safe. Next stage: M1G staged, explicit-Apply Chorus editor (start offline; only expand hardware writes after individual controls pass evidence gates). See [M1F_FIRST_LIVE_WRITE.md](M1F_FIRST_LIVE_WRITE.md).
+**Now:** physical M1F first write/readback/restore PASSED. **M1G Windows desktop GUI is implemented and offline-tested but NOT YET physically validated**. It displays the 59-effect saved snapshot read-only, requires manual live Chorus read, stores all keyboard edits in a local draft, allows a confirmed explicit **±1 wet Apply**, rereads all seven fields for conflict detection, validates ACK/readback, and offers a separate confirm-to-Undo action. On errors it attempts one restore; if restoration cannot be confirmed, it locks new writes. There are no automatic USB reads on startup and no flash saves. See [M1G_GUI_EDITOR.md](M1G_GUI_EDITOR.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
