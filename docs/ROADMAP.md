@@ -69,6 +69,16 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Add offline tests for source labels, 59-effect filters, staged numeric drafts, and success-response parity.
 - [x] Validate corrected M1H GUI on physical BP1032 with read→Apply→Undo→fresh read, all successful according to GUI session history. This does not validate every DPI/layout condition or disconnect handling.
 
+## M1I — manual ranges and evidence inspection (offline, physical review pending)
+- [x] Recheck ACPWorkbench English user manual §6.1.27: Chorus delay 1..25 ms, depth 0..(delay_length−1), rate 0..10 Hz in 0.1-Hz steps, feedback 0..50%, dry/wet 0..100%.
+- [x] Compare against ACPWorkbench.ini raw rate=10, historical protocol note raw100=1.00Hz, original USB log raw100, and M1F physical field3 raw200; **rate scaling and range remain contradictory**.
+- [x] Disable Chorus field3 write hints and mark its unit raw/inferred; keep only wet field6 authorized by existing runtime code. Update data/effects.json with unresolved scale rather than a definite conversion.
+- [x] Add read-only “Chorus · Evidências” tab with seven raw fields, manual limits, snapshot/live origin, evidence sources and write permission indicators.
+- [x] Add offline tests protecting manual range source, unresolved scale, and wet-only permission. CI Windows/Linux green.
+- [ ] Operator UI review of M1I evidence tab (no new physical writes).
+- [ ] Resolve actual Chorus rate scale via sequential ACPWorkbench read display and BPControl readback at unchanged state; avoid any writes or simultaneous access.
+- [ ] Reconcile PingPong delay (manual says samples; old BPControl scheme says ms) before future control enablement.
+
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.
 - [ ] Live desktop editor with safe write confirmation, validated ranges, bypass and local presets.
@@ -86,7 +96,7 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 
 ## Evidence gate
 
-**Now:** **M1H corrected GUI is physically accepted for its tested read→Apply→Undo→read path**. The operator reported a GUI session (2026-11-22) with USB read wet=80, explicitly requested Apply wet 80→81 followed by ACK/readback, Undo wet 81→80 followed by ACK/readback, and a new USB read confirming wet=80. The prior hidden-Apply layout issue is resolved sufficiently for the operator to complete this workflow. The only writable field remains Chorus `0x8F` field 6 wet with one-point changes, explicit authorization, firmware gate, seven-field readback and no flash persistence. **Not yet validated:** disconnect/timeout recovery on physical hardware, untested display DPI combinations, other effect parameter writes, MIDI, continuous editing. Proposed next **M1I**: offline evidence review and safe read-only UX for a second candidate parameter, without unlocking new writes. See [M1H_INSPECTOR_UX.md](M1H_INSPECTOR_UX.md).
+**Now:** M1H live Chorus wet read→Apply→Undo→read is operator-accepted on physical BP1032. **M1I is implemented and passes offline Windows/Linux tests but is not yet UI-reviewed on the user's Windows PC.** Reinspection of supplied ACPWorkbench English manual §6.1.27 uncovered nominal ranges for all six numeric Chorus fields; importantly it contradicts the earlier rate-scale note. Manual says raw10=1.0Hz and raw100=10.0Hz, while previous BPControl notes suggest raw100=1.0Hz and the physical board read raw200. Chorus rate now remains RAW/UNRESOLVED, non-writable. The new read-only evidence tab documents every parameter, nominal manual bounds and source confidence. The **only** writable effect field remains Guitar Chorus wet `0x8F`/6 in confirmed ±1 steps; no flash save. See [M1I_CHORUS_MANUAL_RECONCILIATION.md](M1I_CHORUS_MANUAL_RECONCILIATION.md).
 
 Do not claim a successful USB/MIDI/audio implementation until demonstrated on the physical board.
 
