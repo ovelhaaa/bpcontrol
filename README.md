@@ -383,3 +383,36 @@ recovery and no-flash policy are unchanged.
 **M1H accepted on the physical BP1032 (2026-11-22):** operator GUI history shows manual wet read 80, explicit Apply 80→81 with ACK/readback, Undo 81→80 with ACK/readback, then independent fresh read wet=80. This verifies the corrected layout and tested editing path; USB disconnect safety, other effect writes, and all DPI configurations remain unproven.
 
 See [`docs/M1H_INSPECTOR_UX.md`](docs/M1H_INSPECTOR_UX.md).
+
+
+## M1I — Chorus manual evidence (read-only; Windows UI review pending)
+
+The supplied ACPWorkbench English manual §6.1.27 documents Chorus delay
+1..25 ms; modulation depth 0..(delay_length−1) ms; feedback 0..50%;
+dry and wet 0..100%. Crucially the manual defines modulation rate
+raw 10=1.0Hz and raw 100=10.0Hz, while earlier BPControl
+documentation had raw100=1.0Hz and a physical BP1032 read returned
+raw200, beyond the manual nominal limit. **Do not assign a definitive
+Hz scale or enable rate writes until this is reconciled with a live
+ACPWorkbench display reading.**
+
+The existing desktop script adds a **Chorus · Evidências** tab showing
+raw live/snapshot values, manual nominal ranges, data-source confidence,
+and explicitly locked parameters. No new HID writers were added;
+**only Chorus wet field6 ±1** remains authorized on deliberate Apply.
+
+```powershell
+cd C:\progs\bpcontrol
+git pull
+py -m pip install -e .
+py -m unittest discover -s tests -v
+py tools/chorus_editor_gui.py
+```
+
+Open **Chorus · Evidências** in the offline GUI. The ambiguous
+modulation-rate field should say **CONFLITO DE ESCALA**; the six
+other Chorus fields remain read-only. Normal wet Apply and Undo use
+the unchanged, physically validated M1H backend, but they are not
+needed to review this new tab.
+
+See [`docs/M1I_CHORUS_MANUAL_RECONCILIATION.md`](docs/M1I_CHORUS_MANUAL_RECONCILIATION.md).
