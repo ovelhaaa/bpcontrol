@@ -1,5 +1,12 @@
 # BPControl M1I — reavaliação do manual ACPWorkbench e evidências do Chorus
 
+**Atualização após teste físico:** leitura USB `raw=200` no BPControl e
+`2,00 Hz` relatado no ACPWorkbench para o Rate do mesmo Chorus.
+Consulte [M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md).
+As conclusões abaixo sobre falta de escala se referem ao estado da
+investigação **antes** dessa comparação; a conversão completa continua
+pendente, mas agora há um ponto empírico.
+
 ## Origem desta revisão
 
 O operador pediu uma segunda análise de um dos arquivos de referência.
@@ -191,6 +198,10 @@ Ver [M1I_PROTOCOL_SDK_CROSSCHECK.md](M1I_PROTOCOL_SDK_CROSSCHECK.md).
 O header `chorus.h` do SDK BP1048 confirma `raw/10` para a API DSP;
 a aplicação de exemplo `communication.c` limita escritas rate acima
 de 100 ao default 10. A BP1032 já foi lida em raw=200, o que mantém
-a escala da firmware física **não comprovada**. O parâmetro continua
-somente leitura. O SDK `pingpong.h` recebe samples internamente,
+a escala global da firmware física **não comprovada**. Contudo,
+em 2026-11-22 o operador apresentou leitura física de `raw=200`
+na M1I e relatou que ACPWorkbench exibe `2,00 Hz`. Isso sustenta
+`raw/100` **nesse único ponto**, sem validar linearidade nem limites.
+O parâmetro continua somente leitura; ver
+[M1I_PHYSICAL_RATE_PAIR.md](M1I_PHYSICAL_RATE_PAIR.md). O SDK `pingpong.h` recebe samples internamente,
 enquanto a aplicação traduz ms ACP para samples no próprio firmware.
