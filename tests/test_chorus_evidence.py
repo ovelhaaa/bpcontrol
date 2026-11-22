@@ -44,6 +44,17 @@ class ChorusEvidenceTests(unittest.TestCase):
         self.assertIn("raw 100=1,0Hz", CHORUS_FIELDS[3].scale_evidence)
         self.assertIn("raw=200", CHORUS_FIELDS[3].range_evidence)
 
+    def test_sdk_evidence_is_not_physical_writing_authority(self):
+        rate = CHORUS_FIELDS[3]
+        self.assertIn("SDK BP1048", rate.scale_evidence)
+        self.assertIn("Protocolo V2.40", rate.range_evidence)
+        self.assertIn("raw=200", rate.range_evidence)
+        self.assertIn("10", rate.range_evidence)
+        self.assertIn("M1I_PROTOCOL_SDK_CROSSCHECK.md", rate.evidence_sources)
+        self.assertFalse(rate.writable_now)
+        self.assertEqual(rate.permission_label, "SOMENTE LEITURA")
+        self.assertTrue(CHORUS_FIELDS[6].writable_now)
+
     def test_rate_conversion_is_never_claimed_as_proven(self):
         for raw in (0, 10, 100, 200, -1):
             with self.subTest(raw=raw):
