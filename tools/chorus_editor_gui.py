@@ -522,9 +522,20 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             )
             return
         rows = evidence_rows(effects[14], manual_live[0])
-        evidence_heading.configure(
-            text="CHORUS · RATE 200↔2,00 Hz E 1000↔10,00 Hz · ESCRITA BLOQUEADA",
-        )
+        if manual_live[0] is not None:
+            # The header reflects the ACTUAL latest live readback. Never
+            # mistake a past calibration point for the current board state.
+            raw_rate = rows[3]["current_raw"]
+            observed_display = rows[3]["approximation"]
+            evidence_heading.configure(
+                text=f"CHORUS · USB ATUAL: RAW {raw_rate} · "
+                     f"{observed_display} · RATE SOMENTE LEITURA",
+            )
+        else:
+            evidence_heading.configure(
+                text="CHORUS · SEM LEITURA USB ATUAL · "
+                     "CALIBRAÇÃO DOCUMENTADA: 200/500/1000",
+            )
         for row in rows:
             raw = row["current_raw"]
             # No long provenance text in the 85px numeric column.
