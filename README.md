@@ -223,3 +223,40 @@ ACK shapes, and whether there is a *post-restoration readback*. If any part
 is missing, do not assume a successful rollback. See
 [`docs/M1E_USB_ACK_CAPTURE.md`](docs/M1E_USB_ACK_CAPTURE.md). The raw
 capture stays under Git-ignored `artifacts/` and should not be posted publicly.
+
+## M1F — first guarded Windows Chorus wet write/restore probe
+
+The owner-reported physical M1E USBPcap timeline confirmed six Chorus wet
+field-6 writes, each with a bare padded `0x8F` HID ACK and matching readback;
+Chorus wet restored to `80`. Auto Wah was also toggled and restored
+(`enable 0→1→0`) with readback confirmation. ACPWorkbench's numeric editor
+appears to transmit partial values during typing; BPControl will NOT do this.
+
+The new `tools/probe_chorus_windows.py` **CAN temporarily modify the physical
+BP1032** but only with multiple explicit flags. It is limited to Guitar
+Chorus `0x8F` / field 6 (wet), a **one-point change** followed immediately by
+one restoration attempt and fresh readback of all seven Chorus fields.
+It checks exact Windows HID identity, firmware 0.3.0 and effects library 2.24.0,
+requires an explicit expected current wet value, and uses a killable worker
+watchdog. A timeout/disconnection can prevent restoration. It never persists
+to flash or writes any other effect/parameter.
+
+**This NEW live-write probe has passed offline tests but has NOT yet been
+validated on the physical BP1032.** Only run after reviewing the safety notes,
+with ACPWorkbench closed and audio muted:
+
+```powershell
+cd C:\progs\bpcontrol
+git pull
+py -m unittest discover -s tests -v
+py tools/probe_chorus_windows.py --live-chorus-probe --expect-wet 80 --authorize-one-temporary-write
+```
+
+The expected value 80 is not assumed current: the probe performs two live
+preflight readbacks and refuses to send parameter writes if either differs.
+Outcomes are `PASS_RESTORED`, `ERROR_BUT_RESTORED`, or `STATE_UNCERTAIN`.
+If unsuccessful, do NOT retry automatically; after the worker has exited,
+verify wet using ACPWorkbench and restore manually if needed.
+
+Read [`docs/M1F_FIRST_LIVE_WRITE.md`](docs/M1F_FIRST_LIVE_WRITE.md)
+for the precise safeguards, limitations, and acceptance criteria.
