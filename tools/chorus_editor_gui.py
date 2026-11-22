@@ -1,4 +1,4 @@
-"""BPControl M1G — staged, single-step GUI for Guitar Chorus wet.
+"""BPControl M1H — staged, inspectable desktop interface for BP1032.
 
 Windows tkinter desktop prototype. Retains the full 59-effect read-only
 snapshot explorer. The ONLY writable field is Guitar Chorus (ACP 0x8F)
@@ -16,6 +16,7 @@ Opt into live reads and single-step Apply:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 from pathlib import Path
 import queue
@@ -28,6 +29,10 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from bpcontrol.chorus_editor import parse_wet_draft, validate_editor_target
+from bpcontrol.editor_view_model import (
+    GROUPS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
+    evidence_label, display_value_origin,
+)
 from bpcontrol.snapshot import read_catalog
 from tools.audit_snapshot import audit_snapshot
 
@@ -116,9 +121,9 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         raise RuntimeError("This Python installation has no tkinter/Tcl-Tk") from exc
 
     root = tk.Tk()
-    root.title("BPControl · M1G · Chorus Editor")
-    root.geometry("1210x770")
-    root.minsize(880, 610)
+    root.title("BPControl · M1H · Device Inspector")
+    root.geometry("1280x840")
+    root.minsize(990, 670)
     root.configure(bg=BG)
 
     style = ttk.Style(root)
@@ -133,10 +138,21 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     )
     style.map("BP.Treeview", background=[("selected", "#F8D6C1")],
               foreground=[("selected", INK)])
+    style.configure("BP.TNotebook", borderwidth=0, background=PANEL)
+    style.configure(
+        "BP.TNotebook.Tab", font=("Segoe UI", 10, "bold"),
+        background="#EDE7DD", foreground=INK, padding=(15, 8),
+    )
+    style.map(
+        "BP.TNotebook.Tab", background=[("selected", PANEL)],
+        foreground=[("selected", ORANGE)],
+    )
 
     effects = snapshot["effects"]
     all_indices = [e["index"] for e in effects]
     visible_indices = all_indices[:]
+    group_counts = count_effects_by_group(effects)
+    activity_events: list[str] = []
     selected = [15]
     manual_live = [None]       # most recent explicitly requested physical read
     undo_value = [None]        # previous full seven-field state, one step back
@@ -154,7 +170,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
              bg=SIDEBAR, fg=ORANGE).place(x=20, y=16)
     tk.Label(left, text="CONTROL", font=("Segoe UI", 24, "bold"),
              bg=SIDEBAR, fg="#FAF5ED").place(x=57, y=16)
-    tk.Label(left, text="M1G  /  DEVICE INSPECTOR",
+    tk.Label(left, text="M1H  /  DEVICE INSPECTOR",
              bg=SIDEBAR, fg="#B6AEA2", font=("Segoe UI", 9)).place(x=23, y=67)
     search = tk.StringVar()
     find = tk.Entry(
@@ -162,10 +178,21 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         fg="white", insertbackground="white", font=("Segoe UI", 11),
     )
     find.place(x=18, y=104, width=255, height=35)
-    tk.Label(left, text="59 INSTÂNCIAS · DADOS DO SNAPSHOT",
-             bg=SIDEBAR, fg="#B4ABA1", font=("Segoe UI", 8)).place(x=19, y=157)
+    tk.Label(left, text="FILTRAR POR GRUPO",
+             bg=SIDEBAR, fg="#B4ABA1", font=("Segoe UI", 8)).place(x=19, y=151)
+    group = tk.StringVar(value="Todos")
+    group_picker = ttk.Combobox(
+        left, textvariable=group, state="readonly", values=GROUPS,
+        font=("Segoe UI", 10),
+    )
+    group_picker.place(x=18, y=173, width=255, height=32)
+    list_count = tk.Label(
+        left, text="59 INSTÂNCIAS · SNAPSHOT", bg=SIDEBAR,
+        fg="#B4ABA1", font=("Segoe UI", 8),
+    )
+    list_count.place(x=19, y=216)
     list_frame = tk.Frame(left, bg=SIDEBAR)
-    list_frame.place(x=16, y=184, relwidth=.93, relheight=.66)
+    list_frame.place(x=16, y=238, relwidth=.93, relheight=.59)
     entries = tk.Listbox(
         list_frame, font=("Segoe UI", 10), bg=SIDEBAR, fg="#DDD9D0",
         selectbackground="#63412F", selectforeground="white",
@@ -229,14 +256,18 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     tablebox = tk.Frame(main, bg=PANEL, highlightthickness=1,
                         highlightbackground=LINE, padx=12, pady=12)
     tablebox.pack(fill="both", expand=True)
-    tk.Label(
-        tablebox, text="PARÂMETROS E VALORES OBSERVADOS",
+    table_heading = tk.Label(
+        tablebox, text="PARÂMETROS · SNAPSHOT SALVO (NÃO LIVE)",
         bg=PANEL, fg=MUTED, font=("Segoe UI", 10, "bold"),
-    ).pack(anchor="w", pady=(3, 10))
-
-    tree_area = tk.Frame(tablebox, bg=PANEL)
-    tree_area.pack(fill="both", expand=True)
-    columns = ("field", "name", "value", "unit", "evidence")
+    )
+    table_heading.pack(anchor="w", pady=(3, 10))
+    notebook = ttk.Notebook(tablebox, style="BP.TNotebook")
+    notebook.pack(fill="both", expand=True)
+    tree_area = tk.Frame(notebook, bg=PANEL)
+    activity_area = tk.Frame(notebook, bg=PANEL)
+    notebook.add(tree_area, text="Parâmetros")
+    notebook.add(activity_area, text="Atividade da sessão")
+    columns = ("field", "name", "value", "unit", "evidence", "origin")
     tree = ttk.Treeview(
         tree_area, columns=columns, show="headings", style="BP.Treeview",
         selectmode="browse",
@@ -246,7 +277,8 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         ("name", "Campo", 210, "w"),
         ("value", "Valor", 85, "e"),
         ("unit", "Unidade", 95, "w"),
-        ("evidence", "Evidência", 195, "w"),
+        ("evidence", "Evidência", 185, "w"),
+        ("origin", "Origem", 125, "w"),
     ):
         tree.heading(key, text=text)
         tree.column(key, width=width, anchor=anchor, stretch=key=="name")
@@ -254,6 +286,28 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     tree.configure(yscrollcommand=tree_scroll.set)
     tree.pack(side="left", fill="both", expand=True)
     tree_scroll.pack(side="right", fill="y")
+
+    activity_scroll = tk.Scrollbar(activity_area)
+    activity_scroll.pack(side="right", fill="y")
+    activity_text = tk.Text(
+        activity_area, bg=PANEL, fg=INK, font=("Consolas", 10),
+        relief="flat", borderwidth=0, wrap="word",
+        yscrollcommand=activity_scroll.set, state="disabled",
+    )
+    activity_scroll.configure(command=activity_text.yview)
+    activity_text.pack(side="top", fill="both", expand=True)
+    activity_actions = tk.Frame(activity_area, bg=PANEL)
+    activity_actions.pack(side="bottom", fill="x", pady=4)
+    activity_copy = tk.Button(
+        activity_actions, text="Copiar histórico", bg="#E8E0D4",
+        fg=INK, relief="flat", padx=10, pady=5,
+    )
+    activity_copy.pack(side="left")
+    tk.Label(
+        activity_actions,
+        text="Histórico em memória · nenhum arquivo ou envio automático",
+        bg=PANEL, fg=MUTED, font=("Segoe UI", 9),
+    ).pack(side="right")
 
     editor = tk.Frame(main, bg=PANEL, highlightthickness=1,
                       highlightbackground=LINE, padx=18, pady=14)
@@ -269,6 +323,22 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         fg=MUTED, font=("Segoe UI", 9),
     )
     editor_state.pack(side="right")
+
+    live_strip = tk.Frame(editor, bg=PANEL)
+    live_strip.pack(fill="x", pady=(9, 0))
+    tk.Label(
+        live_strip, text="VALOR CONFIRMADO NA PLACA", bg=PANEL,
+        fg=MUTED, font=("Segoe UI", 9, "bold"),
+    ).pack(side="left")
+    current_wet = tk.Label(
+        live_strip, text="—", bg=PANEL, fg=GREEN,
+        font=("Segoe UI", 19, "bold"),
+    )
+    current_wet.pack(side="left", padx=18)
+    tk.Label(
+        live_strip, text="Leitura USB manual · não confundir com snapshot",
+        bg=PANEL, fg=MUTED, font=("Segoe UI", 9),
+    ).pack(side="left")
 
     editrow = tk.Frame(editor, bg=PANEL)
     editrow.pack(fill="x", pady=(14, 7))
@@ -304,6 +374,12 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
               "A mudança é volátil; não é salva em flash."),
     )
     hint.pack(anchor="w", pady=(5, 0))
+    preview = tk.Label(
+        editor, text="Consulte a placa para preparar uma alteração.",
+        bg=PANEL, fg=MUTED, anchor="w", justify="left",
+        font=("Segoe UI", 10, "bold"),
+    )
+    preview.pack(anchor="w", pady=(7, 1))
 
     status = tk.Label(
         main, text="Nenhuma operação USB iniciada.", fg=MUTED,
@@ -314,6 +390,26 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
 
     def set_status(message, fg=MUTED):
         status.configure(text=message, fg=fg)
+
+    def record_event(category: str, message: str):
+        # Operator-visible history in RAM only. No file/network writes.
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        activity_events.append(f"{timestamp}  {category:<12} {message}")
+        if len(activity_events) > 100:
+            del activity_events[:-100]
+        activity_text.configure(state="normal")
+        activity_text.delete("1.0", "end")
+        activity_text.insert("1.0", "\n".join(activity_events) + "\n")
+        activity_text.see("end")
+        activity_text.configure(state="disabled")
+
+    def copy_activity():
+        if activity_events:
+            root.clipboard_clear()
+            root.clipboard_append("\n".join(activity_events))
+            set_status("Histórico copiado para a área de transferência.", GREEN)
+
+    activity_copy.configure(command=copy_activity)
 
     def effect_row():
         return effects[selected[0]-1]
@@ -329,19 +425,24 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         )
         for key in tree.get_children():
             tree.delete(key)
+        source_label = display_value_origin(index, manual_live[0])
+        table_heading.configure(
+            text="PARÂMETROS · LEITURA USB DO CHORUS" if index == 15
+            and manual_live[0] is not None else
+            "PARÂMETROS · SNAPSHOT SALVO (NÃO LIVE)"
+        )
         fields = e.get("fields", [])
         if not fields:
             tree.insert("", "end", values=("", "Nenhum valor no snapshot",
-                                           "—", "—", "read-only"))
+                                           "—", "—", "read-only", "Sem leitura"))
         for f in fields:
             actual_value = f["signed"]
-            evidence = f.get("mapping", "unknown")
+            evidence = evidence_label(f)
             if index == 15 and manual_live[0] is not None:
                 actual_value = manual_live[0][f["index"]]
-                evidence = "readback USB atual" if f["index"] == 6 else evidence
             tree.insert("", "end", values=(
                 f"{f['index']:02d}", f.get("name", "field"),
-                actual_value, f.get("unit", "raw"), evidence
+                actual_value, f.get("unit", "raw"), evidence, source_label,
             ))
         refresh_editor_state()
 
@@ -351,12 +452,10 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             choose_effect(visible_indices[active[0]])
 
     def filter_list(*_):
-        phrase = search.get().casefold().strip()
-        visible_indices[:] = [
-            e["index"] for e in effects
-            if phrase in (e["name"] + " " + e["command"] +
-                          " " + e["type_name"]).casefold()
-        ]
+        visible_indices[:] = filter_effect_indices(effects, search.get(), group.get())
+        list_count.configure(
+            text=f"{len(visible_indices)} DE {group_counts['Todos']} INSTÂNCIAS · SNAPSHOT"
+        )
         entries.delete(0, tk.END)
         for i in visible_indices:
             e = effects[i-1]
@@ -370,14 +469,29 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         editing = selected[0] == 15
         ready = editing and allow_live and manual_live[0] is not None
         enabled = ready and not busy[0] and not locked[0]
-        button_read = allow_live and not busy[0] and not locked[0]
+        assessment = assess_wet_draft(
+            draft.get(), manual_live[0][6] if manual_live[0] is not None else None
+        )
+        button_read = editing and allow_live and not busy[0] and not locked[0]
         refresh_button.configure(state="normal" if button_read else "disabled")
         entry.configure(state="normal" if enabled else "disabled")
-        apply_btn.configure(state="normal" if enabled else "disabled")
+        apply_btn.configure(
+            state="normal" if enabled and assessment.can_apply else "disabled"
+        )
         cancel_btn.configure(state="normal" if enabled else "disabled")
         undo_btn.configure(
             state="normal" if enabled and undo_value[0] is not None
             else "disabled"
+        )
+        current_wet.configure(
+            text=f"{manual_live[0][6]}%" if manual_live[0] is not None else "—",
+            fg=GREEN if manual_live[0] is not None else MUTED,
+        )
+        preview.configure(
+            text=assessment.summary if editing else "Efeito somente leitura.",
+            fg=GREEN if enabled and assessment.can_apply else
+               RED if assessment.state in ("invalid", "step_too_large", "unverified")
+               and enabled else MUTED,
         )
         if not editing:
             editor_state.configure(text="Outro efeito: somente leitura", fg=MUTED)
@@ -554,10 +668,11 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         set_status("Rascunho cancelado; nenhum comando USB enviado.", MUTED)
 
     def on_draft_edit(*_):
+        # Only updates widgets. Deliberately contains no HID action or worker call.
+        refresh_editor_state()
         if not busy[0] and not locked[0] and manual_live[0] is not None:
             set_status(
-                "Rascunho local alterado. Nada foi enviado ao DSP. "
-                "Use Aplicar (ou Enter) para confirmar.",
+                "Rascunho local. Nenhum comando enviado durante a digitação.",
                 MUTED,
             )
 
@@ -578,6 +693,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
 
     entries.bind("<<ListboxSelect>>", select_list)
     search.trace_add("write", filter_list)
+    group.trace_add("write", filter_list)
     draft.trace_add("write", on_draft_edit)
     entry.bind("<Return>", return_key)
     refresh_button.configure(command=read_clicked)
@@ -624,7 +740,7 @@ def main(argv=None) -> int:
         validate_snapshot_for_viewing(snapshot)
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         parser.error(f"invalid snapshot: {exc}")
-    print(f"BPControl M1G — snapshot {path}", flush=True)
+    print(f"BPControl M1H — snapshot {path}", flush=True)
     print(
         "MODE: MANUAL USB CHORUS WET ±1, no flash writes."
         if args.enable_live_writes else "MODE: OFFLINE / NO USB ACCESS.",
