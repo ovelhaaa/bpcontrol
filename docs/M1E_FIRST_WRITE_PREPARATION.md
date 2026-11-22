@@ -120,3 +120,10 @@ the one step.
   this milestone.
 
 **No further write capability is shipped or activated by this document.**
+
+## Passive ACK analyzer implemented
+
+The follow-up preparation includes a bounded USBPcap capture scenario and
+`tools/analyze_chorus_write_ack.py`, tested against synthetic USBPcap URBs.
+No direct device write was added. Follow the step-by-step procedure in
+[M1E_USB_ACK_CAPTURE.md](M1E_USB_ACK_CAPTURE.md) before creating a live writer.
