@@ -122,3 +122,31 @@ Arquivos principais:
 - [`data/effect_instances.json`](../data/effect_instances.json)
 - [`src/bpcontrol/snapshot.py`](../src/bpcontrol/snapshot.py)
 - [`tests/test_audit_snapshot.py`](../tests/test_audit_snapshot.py)
+
+## Physical M1D audit: operator-reported results (2026-11-22)
+
+The owner subsequently pasted terminal output for the actual Windows
+BP1032 snapshot. It reported:
+
+```text
+Snapshot marked complete: True
+Read successfully: 59/59  (declared: 59)
+Unread: 0  capture errors: 0
+Raw signed/unsigned fields: 845
+Known evidence-graded schema mappings: 6/6
+Instances with raw-only labels: 53
+Count mismatches vs INI hints: 0
+Audit errors: 0  warnings: 0
+```
+
+The entire 59-row table showed that every instance's readback word count
+matches the INI hint count; the largest schemas were 79 words for `0xAA`
+and `0xAB`, followed by 53 words for the eight EQ instances. Pro Reverb
+has 17 words but some field labels are still inferred. This evidence
+comes from **the operator's displayed audit output**, not independent
+inspection of the unshared raw JSON bytes. It does not validate each
+field's scale or authorize writes.
+
+The next step is [M1E write preparation](M1E_FIRST_WRITE_PREPARATION.md),
+starting with an offline candidate frame and a passive ACPWorkbench HID
+write/ACK capture before any BPControl-controlled parameter changes.
