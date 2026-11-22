@@ -1,58 +1,57 @@
-# BP1032 USB discovery: Windows observations (2026-11-21)
+# BP1032 USB discovery: Windows observations
 
-## Confirmed from the owner's Device Manager event
+## Device identity — confirmed by the owner
 
-The user reported a **Windows software audio endpoint**:
+The BP1032 appears as a USB composite device with VID `0x1235` and PID `0x0003`.
 
-```text
-SWD\MMDEVAPI\{0.0.0.00000000}.{3e4ce032-a22b-4d36-b3d3-17b49715fe9d}
-Driver: audioendpoint.inf (Microsoft)
-Parent: USB\VID_1235&PID_0003&MI_00\7&3551e31d&4&0000
-```
+| Windows interface | Reported device class / display name | Interpretation |
+|---|---|---|
+| `USB\\VID_1235&PID_0003&MI_00` | MEDIA — `mvsilicon B1 usb audio` | Audio interface |
+| `HID\\VID_1235&PID_0003&MI_03` | HIDClass — HID-compliant consumer control device | Consumer control collection (likely playback/volume keys) |
+| `HID\\VID_1235&PID_0003&MI_04` | HIDClass — HID-compliant vendor-defined device | **Top candidate for ACP protocol transport** |
+| `USB\\VID_1235&PID_0003&MI_03` | HIDClass — USB Input Device | HID interface parent for MI_03 |
+| `USB\\VID_1235&PID_0003&MI_04` | HIDClass — USB Input Device | HID interface parent for MI_04 |
+| `USB\\VID_1235&PID_0003` | USB — USB Composite Device | Composite device parent |
 
-Derived physical identifiers:
-- VID: `0x1235`
-- PID: `0x0003`
-- Interface shown as parent: `MI_00`
-- Connection displayed by ACPWorkbench: `mvsilicon B1 usb audio`
+Source: owner-reported `Get-PnpDevice -PresentOnly` output (2026-11-21, Windows).
 
-**Crucial distinction:** `SWD\MMDEVAPI\...` is an audio endpoint, *not* the HID interface used for ACP. `audioendpoint.inf` does not establish HID report details. `MI_00` is a USB interface number associated with that audio endpoint and must not be hard-coded as the ACP control interface.
+**Interpretation warning:** An HID vendor-defined collection on MI_04 is an excellent lead, **not yet proof** that ACPWorkbench sends frames through it. We still need HID usage-page/report-length descriptors and ideally one captured ACPWorkbench USB transaction.
 
-## USB identifier conflict — independent public corroboration
+## Vendor ID collision
 
-A Linux kernel patch dated 2026-03-01, titled *ALSA: usb-audio: Deconflict VID between Focusrite Novation & MV-SILICON*, explicitly documents:
-- `idVendor=1235, idProduct=0003`
-- `Product: mvsilicon B1 usb audio`
-- `Manufacturer: MV-SILICON`
+`0x1235` is assigned to Focusrite/Novation, but MV-SILICON-based devices have been independently documented reusing the same VID/PID. **Never decide to write based solely on VID/PID**; correlate strings and interfaces and validate firmware with a known *read-only* request first.
 
-Reference: https://lkml.iu.edu/2603.0/00457.html
+Background: https://lkml.iu.edu/2603.0/00457.html
 
-The `0x1235` VID is registered to Focusrite/Novation; MV-SILICON-based devices can reuse this VID. **Never identify the target solely by VID/PID** when deciding whether to write. Check manufacturer/product strings, interface class and optionally a read-only ACP firmware identification. No claim is made that this specific physical board has the same serial as examples in the patch.
+## Next check — read-only HID enumerator
 
-## Next diagnostic: Windows PnP tree (read-only)
-
-With the BP1032 connected, run Windows PowerShell:
+On Windows with the board connected:
 
 ```powershell
-Get-PnpDevice -PresentOnly |
-  Where-Object { $_.InstanceId -match 'VID_1235&PID_0003' } |
-  Select-Object Class, FriendlyName, InstanceId |
-  Format-List
+py -m pip install hidapi
+py tools/inspect_hid.py
 ```
 
-Look for `HID\VID_1235&PID_0003...` or `USB\VID_1235&PID_0003&MI_XX` entries. **Absence from the list does not prove HID is absent:** further descriptor inspection is warranted.
+The script prints the HID collections, interface number if exposed, a sanitized path hint (e.g. MI_04), usage page, usage, manufacturer and product. It **never opens** the device, writes to it or prints unique device paths/serials.
 
-Then, if necessary, capture the descriptors using USBTreeView/USBView, identifying:
-- Device `bDeviceClass`, manufacturer/product strings.
-- All interfaces `bInterfaceNumber`, `bInterfaceClass`, `bInterfaceSubClass`, `bInterfaceProtocol`.
-- HID report descriptor if present, endpoint directions/addresses and `wMaxPacketSize`.
+Focus on MI_04. A vendor-defined HID usage page typically lies in `0xFF00..0xFFFF`, but an unknown usage-page number does not rule out this interface.
 
-Do not change Windows drivers, install WinUSB/libusb replacements, or run speculative writes merely to inspect the device. Keep ACPWorkbench closed when a future independent controller actually opens the USB interface.
+For actual report lengths, report IDs, endpoint addresses and packet layouts, inspect MI_04 in **USBTreeView/USBView** or capture a read-only ACPWorkbench transaction with **USBPcap/Wireshark**. Do not switch Windows drivers; HIDClass already enumerates.
+
+## Safe Windows sequence
+
+1. Enumerate only via script. Check that MI_04 is the vendor-defined collection and MI_03 is consumer control.
+2. Collect detailed USB HID descriptors for MI_04: `bInterfaceClass`, HID report descriptor, report ID(s), Input/Output/Feature report lengths, IN/OUT endpoints, `wMaxPacketSize`.
+3. If format is still unclear, capture only BP1032 traffic while ACPWorkbench performs one known read, e.g. `0x8F` Guitar Chorus. Save sanitized fixtures only.
+4. After a **verified read-only transport**, implement `read_device_info()` before attempting guarded parameter writes.
+5. Never run ACPWorkbench and BPControl against the same HID endpoint concurrently, never flash the DSP firmware or modify drivers merely for enumeration.
 
 ## Status
 
-- [x] Parent USB VID/PID discovered.
-- [x] Audio endpoint on interface MI_00 identified.
-- [ ] HID interface confirmed (number/class/endpoints unknown).
-- [ ] Raw HID report descriptor or actual transfer captured.
-- [ ] BPControl read-only USB communication tested.
+- [x] VID/PID: `0x1235:0x0003`.
+- [x] Composite audio interface MI_00 recognized.
+- [x] Consumer-control HID collection MI_03 recognized.
+- [x] **Vendor-defined HID collection MI_04 recognized**.
+- [ ] HID report descriptor and report sizes identified.
+- [ ] Verified USB ACP read transaction on MI_04.
+- [ ] PC read-only BPControl transport implemented.
