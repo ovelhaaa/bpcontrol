@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bpcontrol"
+version = "0.1.0a0"
+description = "Experimental ACP protocol control toolkit for MVSilicon BP1032"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "bpcontrol contributors"}]
+dependencies = []
+
+[project.scripts]
+bpcontrol = "bpcontrol.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

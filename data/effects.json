@@ -1,0 +1,409 @@
+{
+  "firmware_tag_observed": "HunXiang_F",
+  "hardware_user_report": "BP1032",
+  "compatibility": "firmware_specific_not_universal",
+  "effect_maps": {
+    "guitar_chorus": {
+      "index": 15,
+      "command": "0x8F",
+      "name": "Guitar Chorus",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "enable",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 1,
+          "name": "delay_length",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 2,
+          "name": "modulation_depth",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 3,
+          "name": "modulation_rate",
+          "unit": "Hz",
+          "scale": 100,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 4,
+          "name": "feedback",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 5,
+          "name": "dry",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 6,
+          "name": "wet",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        }
+      ]
+    },
+    "mic_echo": {
+      "index": 10,
+      "command": "0x8A",
+      "name": "Mic Echo",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "enable",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 1,
+          "name": "cutoff",
+          "unit": "Hz",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 2,
+          "name": "attenuation",
+          "unit": "Q15 gain",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 3,
+          "name": "delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 4,
+          "name": "unknown_04",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "readback_ui",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 5,
+          "name": "max_delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "readback_ui",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 6,
+          "name": "quality_mode",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 7,
+          "name": "dry",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 8,
+          "name": "wet",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        }
+      ]
+    },
+    "guitar_pingpong": {
+      "index": 14,
+      "command": "0x8E",
+      "name": "Guitar PingPong",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "enable",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 1,
+          "name": "attenuation",
+          "unit": "Q15 gain",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 2,
+          "name": "delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 3,
+          "name": "high_quality",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 4,
+          "name": "wet_dry_mix",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 5,
+          "name": "max_delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "readback_ui",
+          "writable_in_future_transport": false
+        }
+      ]
+    },
+    "music_delay": {
+      "index": 28,
+      "command": "0x9C",
+      "name": "Music Delay",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "enable",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 1,
+          "name": "delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 2,
+          "name": "max_delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "readback_ui",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 3,
+          "name": "high_quality",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        }
+      ]
+    },
+    "pitch_shifter_pro": {
+      "index": 20,
+      "command": "0x94",
+      "name": "Music Pitch Shifter Pro",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "enable",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 1,
+          "name": "pitch",
+          "unit": "semitones",
+          "scale": 10,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        }
+      ]
+    },
+    "pro_reverb": {
+      "index": 13,
+      "command": "0x8D",
+      "name": "Mic Pro Reverb",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "enable",
+          "unit": "bool",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 1,
+          "name": "dry",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 2,
+          "name": "wet",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 3,
+          "name": "erwet",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "write_readback",
+          "writable_in_future_transport": true
+        },
+        {
+          "index": 4,
+          "name": "erfactor",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 5,
+          "name": "erwidth",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 6,
+          "name": "ertolate",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 7,
+          "name": "rt60",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 8,
+          "name": "delay",
+          "unit": "ms",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 9,
+          "name": "width",
+          "unit": "%",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 10,
+          "name": "wander",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 11,
+          "name": "spin",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 12,
+          "name": "input_lpf",
+          "unit": "Hz",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 13,
+          "name": "damp_lpf",
+          "unit": "Hz",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 14,
+          "name": "bass_lpf",
+          "unit": "Hz",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 15,
+          "name": "bassb",
+          "unit": "raw",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        },
+        {
+          "index": 16,
+          "name": "output_lpf",
+          "unit": "Hz",
+          "scale": 1,
+          "evidence": "inferred",
+          "writable_in_future_transport": false
+        }
+      ]
+    }
+  }
+}
