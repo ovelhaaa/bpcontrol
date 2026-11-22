@@ -125,3 +125,52 @@ Arquivos relacionados:
 - [`tests/test_editor_view_model.py`](../tests/test_editor_view_model.py)
 - [`docs/M1G_GUI_EDITOR.md`](M1G_GUI_EDITOR.md)
 - [`docs/ROADMAP.md`](ROADMAP.md)
+
+## Correção de layout após o primeiro teste físico (2026-11-22)
+
+O operador trouxe um histórico da M1H:
+
+```text
+17:55:35 INÍCIO    M1H aberta · nenhum USB automático
+17:55:42 CONSULTA Consulta USB solicitada
+17:55:42 CONSULTA Chorus wet=80 · leitura USB
+17:56:16 CONSULTA Consulta USB solicitada
+17:56:16 CONSULTA Chorus wet=80 · leitura USB
+```
+
+**Leitura USB aprovada nessa execução:** o equipamento respondeu duas
+vezes `wet=80`, sem falha indicada no histórico. O operador informou
+que **o botão para alterar o valor não apareceu na interface**.
+
+A revisão do código encontrou duas causas de layout plausíveis:
+(1) a tabela/abas expansíveis eram empacotadas antes do editor, podendo
+empurrar o painel de edição para fora da área visível em telas menores;
+(2) todos os controles de edição estavam na mesma linha, podendo
+ocultar ações em janelas estreitas ou no escalonamento de DPI do Windows.
+
+**Correção aplicada:** o painel `ALTERAR CHORUS WET` e a mensagem
+de estado agora são posicionados **antes** do painel expansível de
+parâmetros e da aba Atividade. A área de edição foi dividida em duas
+linhas: valor e botões **−1/+1** (apenas preparação local), depois
+**APLICAR NA PLACA**, Desfazer e Cancelar. Assim o controle de edição
+não depende de rolar a tabela ou de trocar de aba.
+
+Após consultar o Chorus, use a seguinte sequência para validar:
+
+1. Conferir o indicador `VALOR CONFIRMADO NA PLACA: 80%`.
+2. Clicar **−1**: o rascunho fica 79; **nenhuma escrita USB** é
+   realizada por esse clique.
+3. Observar a prévia `80 → 79 (-1)` e o botão
+   **APLICAR NA PLACA** agora habilitado e visível acima das abas.
+4. Clicar **APLICAR NA PLACA**, confirmar, aguardar
+   `APPLIED_VERIFIED`.
+5. Clicar **Desfazer último Apply**, confirmar, conferir retorno a 80.
+6. A aba `Atividade da sessão` deve registrar as operações.
+
+**Limites preservados:** somente campo 6 de `0x8F`, diferença de
+±1 por Apply, firmware gate e dupla checagem de sete campos, ACK,
+readback, restauração conservadora em erro, nenhum `0xFD` ou `0xFE`.
+
+Essa correção foi testada de forma automatizada quanto ao contrato
+de organização da GUI e à preparação puramente local do rascunho,
+**mas ainda precisa ser conferida visualmente no Windows do operador**.
