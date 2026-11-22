@@ -2,7 +2,7 @@
 
 **BPControl** is an experimental, evidence-based controller toolkit for MVSilicon BP10xx DSP boards, initially targeting **BP1032** with the observed `HunXiang_F` firmware.
 
-> **Status: M1A (USB HID transport candidate implemented, live test pending).** The Windows driver is restricted to a single explicitly authorized Chorus read; it has **not yet been verified against the physical BP1032**. This project does not replace DSP firmware or process audio.
+> **Status: M1A physically verified for Windows Chorus READ (2026-11-22).** Owner-reported success `READ OK: 0x8F`, raw values `[1,20,10,200,50,80,80]`, matching passive capture. Firmware/status one-shot reads are newly implemented but not yet physically tested. This toolkit neither replaces DSP firmware nor processes audio.
 
 ## Goals
 
@@ -36,7 +36,7 @@ bpcontrol write guitar_chorus modulation_rate 100
 bpcontrol decode "A5 5A 8F 0F FF 01 00 07 00 05 00 64 00 19 00 50 00 5A 00 16"
 ```
 
-The `read` and `write` commands **print ACP packets; they DO NOT send anything to hardware**. USB HID descriptors, report IDs, padding, and transport details still require verification.
+The offline CLI `read` and `write` commands **print ACP packets; they DO NOT send anything to hardware**. The specific separate Windows live-read scripts below use the verified HID transport (MI_04, report ID 0, 256-byte USB reports).
 
 ## Structure
 
@@ -87,3 +87,25 @@ has a parent-side 4-second timeout. Report any error instead of retrying blindly
 
 GitHub Actions runs the offline test suite on Windows and Linux. CI success
 is not a substitute for testing the physical BP1032.
+
+## M1A — Firmware/status one-shot probes (experimental)
+
+The physical Windows Chorus read succeeded; the live firmware and status
+queries have **not yet** been verified. See `src/bpcontrol/usb_read_only.py`.
+The only permitted ACP requests are empty-payload `0x00` and `0x02`.
+They use the same Win32 HID Report ID 0 / EP0 scheme and 4-second subprocess
+limit as the successful Chorus reader. They print raw reply payload bytes
+rather than interpreting unverified runtime telemetry.
+
+```powershell
+git pull
+py -m pip install -e .
+py -m unittest discover -s tests -v
+# Close ACPWorkbench; one active read per invocation:
+py tools/read_info_windows.py --live-read-firmware
+py tools/read_info_windows.py --live-read-status
+```
+
+Both scripts have no device access by default, no ACP parameter writes, no
+flash persistence, no retries, and an explicit command allowlist. If either
+fails, retain the error output and do not automatically repeat.
