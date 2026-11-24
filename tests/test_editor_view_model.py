@@ -146,6 +146,35 @@ class M1HViewModelTests(unittest.TestCase):
             self.assertNotIn(forbidden, source)
         self.assertEqual(assess_wet_draft("79", 80).can_apply, True)
 
+    def test_read_effect_validation_and_live_origin(self):
+        from bpcontrol.editor_view_model import (
+            display_value_origin, present_effect_fields, validate_success_reply,
+        )
+        validate_success_reply("read_effect", {
+            "status": "EFFECT_READ_OK", "index": 7, "fields": [1, 67, 110, 2],
+        })
+        with self.assertRaises(ValueError):
+            validate_success_reply("read_effect", {
+                "status": "EFFECT_READ_OK", "index": 60, "fields": [1],
+            })
+        self.assertEqual(
+            display_value_origin(7, None, {7: (1, 67, 110, 2)}),
+            "USB / leitura atual",
+        )
+        rec = {
+            "index": 7,
+            "type_id": 0,
+            "fields": [
+                {"index": 0, "signed": 0, "unsigned": 0, "mapping": "unknown"},
+                {"index": 1, "signed": 67, "unsigned": 67, "mapping": "unknown"},
+                {"index": 2, "signed": 110, "unsigned": 110, "mapping": "unknown"},
+                {"index": 3, "signed": 0, "unsigned": 0, "mapping": "unknown"},
+            ],
+        }
+        rows = present_effect_fields(rec, (1, 68, 117, 2))
+        self.assertEqual(rows[0]["value_display"], "1 (on)")
+        self.assertEqual(rows[1]["value_display"], "'D' (D major)")
+
 
 if __name__ == "__main__":
     unittest.main()

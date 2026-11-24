@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .chorus_editor import parse_wet_draft
+from .protocol_effects import PROTOCOL_EFFECTS, format_param_value
 
 GROUPS = ("Todos", "Music", "Mic", "Guitar", "Rec", "Other")
 GROUP_LABELS = {
@@ -96,9 +97,17 @@ def assess_wet_draft(draft: str, live_wet: int | None) -> DraftView:
     )
 
 
-def display_value_origin(effect_index: int, live_values: tuple[int, ...] | None) -> str:
+def display_value_origin(
+    effect_index: int,
+    live_values: tuple[int, ...] | None,
+    live_effects: dict[int, tuple[int, ...]] | None = None,
+) -> str:
     """Never imply the 59-effect snapshot is real-time live data."""
-    return "USB / leitura atual" if effect_index == 15 and live_values else "Snapshot salvo"
+    if effect_index == 15 and live_values:
+        return "USB / leitura atual"
+    if live_effects and effect_index in live_effects:
+        return "USB / leitura atual"
+    return "Snapshot salvo"
 
 
 
@@ -145,6 +154,17 @@ def validate_success_reply(
             raise ValueError("wet readback outside 0..100")
         if payload.get("wet") is not None and payload.get("wet") != fields[6]:
             raise ValueError("wet summary contradicts full readback")
+    elif mode == "read_effect":
+        if kind != "EFFECT_READ_OK":
+            raise ValueError("expected EFFECT_READ_OK")
+        idx = payload.get("index")
+        if type(idx) is not int or not 1 <= idx <= 59:
+            raise ValueError("effect read reply requires index 1..59")
+        fields = payload.get("fields")
+        if not isinstance(fields, list) or not fields:
+            raise ValueError("effect read reply requires non-empty fields")
+        if any(type(v) is not int or not -32768 <= v <= 32767 for v in fields):
+            raise ValueError("effect read reply contains non-integer field")
     elif mode == "apply":
         if kind != "APPLIED_VERIFIED":
             raise ValueError("expected APPLIED_VERIFIED")
@@ -166,3 +186,55 @@ def validate_success_reply(
             raise ValueError("apply reply lacks a clean ACK or matching target")
     else:
         raise ValueError("unknown worker operation")
+
+
+def present_effect_fields(
+    effect_record: dict,
+    live_words: tuple[int, ...] | None = None,
+) -> list[dict]:
+    """Return read-only presentation rows enriched with V2.40.0 protocol metadata.
+
+    Protocol metadata improves human readability (parameter names, units,
+    and formatted values) without granting any write permissions.
+    """
+    fields = effect_record.get("fields", [])
+    if not fields:
+        return []
+    index = effect_record.get("index")
+    type_id = effect_record.get("type_id")
+    schema = PROTOCOL_EFFECTS.get(type_id) if isinstance(type_id, int) else None
+    has_protocol = schema is not None and len(fields) == schema.word_count
+
+    rows: list[dict] = []
+    use_live = live_words is not None and len(live_words) == len(fields)
+    for pos, field in enumerate(fields):
+        raw_val = live_words[field["index"]] if use_live else field["signed"]
+        mapping = field.get("mapping", "unknown")
+        if has_protocol:
+            proto_param = schema.params[pos]
+            formatted = format_param_value(proto_param, raw_val)
+            name = proto_param.name if mapping == "unknown" else field.get("name", proto_param.name)
+            unit = proto_param.unit if mapping == "unknown" else field.get("unit", proto_param.unit)
+            evidence = (
+                evidence_label(field)
+                if mapping != "unknown"
+                else "Protocolo V2.40 · leitura"
+            )
+            doc_ref = schema.doc_ref
+        else:
+            formatted = str(raw_val)
+            name = field.get("name", f"field_{pos:02d}")
+            unit = field.get("unit", "raw")
+            evidence = evidence_label(field)
+            doc_ref = ""
+
+        rows.append({
+            "index": field["index"],
+            "name": name,
+            "raw": raw_val,
+            "value_display": formatted,
+            "unit": unit,
+            "evidence": evidence,
+            "doc_ref": doc_ref,
+        })
+    return rows

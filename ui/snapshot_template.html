@@ -164,13 +164,18 @@ function renderSelected(){
  }else{
    for(const f of e.fields){
      const box=document.createElement('div');box.className='field';
-     const title=document.createElement('div');title.className='fieldName';title.textContent=f.name;
+     const displayTitle=f.mapping==='unknown'&&f.protocol_name?f.protocol_name:f.name;
+     const displayUnit=f.mapping==='unknown'&&f.protocol_unit?f.protocol_unit:(f.unit||'raw');
+     const title=document.createElement('div');title.className='fieldName';title.textContent=displayTitle;
      const hint=document.createElement('div');hint.className='fieldSub';
-     hint.textContent=f.ini_hint&&f.ini_hint!==f.name?'INI: '+f.ini_hint:'Campo '+String(f.index).padStart(2,'0');
-     const val=document.createElement('div');val.className='fieldValue';val.textContent=n(f.signed);
-     const unit=document.createElement('em');unit.textContent=' '+(f.unit||'raw');val.appendChild(unit);
+     hint.textContent=f.ini_hint&&f.ini_hint!==displayTitle?'INI: '+f.ini_hint:'Campo '+String(f.index).padStart(2,'0');
+     const val=document.createElement('div');val.className='fieldValue';
+     val.textContent=f.protocol_formatted&&f.protocol_formatted!==String(f.signed)?f.protocol_formatted:n(f.signed);
+     if(!(f.protocol_formatted&&f.protocol_formatted!==String(f.signed))){
+       const unit=document.createElement('em');unit.textContent=' '+displayUnit;val.appendChild(unit);
+     }
      const conf=document.createElement('div');conf.className='fieldConfidence';
-     conf.textContent=f.mapping==='unknown'?'sem escala validada':'mapeamento: '+f.mapping;
+     conf.textContent=f.mapping==='unknown'?(f.protocol_doc?'Protocolo '+f.protocol_doc:'sem escala validada'):'mapeamento: '+f.mapping;
      const unsigned=document.createElement('div');unsigned.className='fieldSub';unsigned.textContent='u16: '+f.unsigned+' / s16: '+f.signed;
      box.append(title,hint,val,unsigned,conf);fields.appendChild(box);
    }

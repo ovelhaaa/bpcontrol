@@ -35,7 +35,7 @@ from bpcontrol.chorus_evidence import (
 from bpcontrol.editor_view_model import (
     GROUPS, GROUP_LABELS, assess_wet_draft, filter_effect_indices, count_effects_by_group,
     evidence_label, display_value_origin, validate_success_reply,
-    stage_wet_step,
+    stage_wet_step, present_effect_fields,
 )
 from bpcontrol.snapshot import read_catalog
 from tools.audit_snapshot import audit_snapshot
@@ -66,15 +66,22 @@ def validate_snapshot_for_viewing(snapshot: dict) -> None:
 
 
 def run_worker_once(mode: str, expected: tuple[int, ...] | None = None,
-                    target: int | None = None, *, python=sys.executable) -> dict:
+                    target: int | None = None, *,
+                    effect_index: int | None = None,
+                    python=sys.executable) -> dict:
     """Run one killable child. Never reattempt timeout or failing writes."""
-    if mode not in ("read", "apply"):
+    if mode not in ("read", "read_effect", "apply"):
         raise ValueError("Unexpected editor operation")
     command = [python, str(LIVE_WORKER)]
     if mode == "read":
-        if expected is not None or target is not None:
+        if expected is not None or target is not None or effect_index is not None:
             raise ValueError("Read must not include write arguments")
         command.append("--read")
+    elif mode == "read_effect":
+        if (expected is not None or target is not None
+                or type(effect_index) is not int or not 1 <= effect_index <= 59):
+            raise ValueError("read_effect requires effect_index 1..59 and no write arguments")
+        command.extend(["--read-effect", str(effect_index)])
     else:
         validate_editor_target(expected, target)
         command.extend([
@@ -108,7 +115,7 @@ def run_worker_once(mode: str, expected: tuple[int, ...] | None = None,
             "error": f"Invalid HID worker reply (exit {child.returncode}); "
                      "do not automatically retry.",
         }
-    if payload["status"] in ("READ_OK", "APPLIED_VERIFIED"):
+    if payload["status"] in ("READ_OK", "EFFECT_READ_OK", "APPLIED_VERIFIED"):
         if child.returncode != 0:
             return {
                 "status": "STATE_UNCERTAIN" if mode == "apply" else "READ_ERROR",
@@ -125,7 +132,13 @@ def run_worker_once(mode: str, expected: tuple[int, ...] | None = None,
     return payload
 
 
-def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
+def launch_gui(
+    snapshot: dict,
+    *,
+    allow_live: bool,
+    source: Path,
+    allow_live_reads: bool | None = None,
+) -> None:
     try:
         import tkinter as tk
         from tkinter import ttk, messagebox
@@ -160,6 +173,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         foreground=[("selected", ORANGE)],
     )
 
+    can_read_usb = (sys.platform == "win32") if allow_live_reads is None else bool(allow_live_reads)
     effects = snapshot["effects"]
     all_indices = [e["index"] for e in effects]
     visible_indices = all_indices[:]
@@ -167,6 +181,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     activity_events: list[str] = []
     selected = [15]
     manual_live = [None]       # most recent explicitly requested physical read
+    live_effects: dict[int, tuple[int, ...]] = {}
     undo_value = [None]        # previous full seven-field state, one step back
     busy = [False]
     locked = [False]           # irreversible for this GUI session after uncertainty
@@ -241,14 +256,15 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     state_row.pack(fill="x", pady=(19, 14))
     mode_label = tk.Label(
         state_row,
-        text="● LEITURA + EDIÇÃO HABILITADA" if allow_live else
-             "● SOMENTE LEITURA — MODO OFFLINE",
-        bg=BG, fg=GREEN if allow_live else MUTED,
+        text="● LEITURA USB + EDIÇÃO CHORUS WET HABILITADA" if allow_live else
+             ("● CONSULTA USB EM TEMPO REAL (SOMENTE LEITURA)" if can_read_usb else
+              "● SOMENTE LEITURA — MODO OFFLINE"),
+        bg=BG, fg=GREEN if (allow_live or can_read_usb) else MUTED,
         font=("Segoe UI", 10, "bold"),
     )
     mode_label.pack(side="left")
     refresh_button = tk.Button(
-        state_row, text="↻  Consultar Chorus (USB)", relief="flat",
+        state_row, text="↻  Consultar USB (Leitura)", relief="flat",
         bg=SIDEBAR, fg="white", activebackground="#474747",
         activeforeground="white", padx=13, pady=8, cursor="hand2",
     )
@@ -288,8 +304,8 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     )
     for key, text, width, anchor in (
         ("field", "#", 42, "center"),
-        ("name", "Campo", 210, "w"),
-        ("value", "Valor", 85, "e"),
+        ("name", "Campo", 200, "w"),
+        ("value", "Valor", 150, "w"),
         ("unit", "Unidade", 95, "w"),
         ("evidence", "Evidência", 185, "w"),
         ("origin", "Origem", 125, "w"),
@@ -568,24 +584,25 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         )
         for key in tree.get_children():
             tree.delete(key)
-        source_label = display_value_origin(index, manual_live[0])
+        source_label = display_value_origin(index, manual_live[0], live_effects)
+        live_words = (
+            manual_live[0]
+            if index == 15 and manual_live[0] is not None
+            else live_effects.get(index)
+        )
         table_heading.configure(
-            text="PARÂMETROS · LEITURA USB DO CHORUS" if index == 15
-            and manual_live[0] is not None else
+            text="PARÂMETROS · LEITURA USB ATUAL"
+            if live_words is not None else
             "PARÂMETROS · SNAPSHOT SALVO (NÃO LIVE)"
         )
-        fields = e.get("fields", [])
-        if not fields:
+        rows = present_effect_fields(e, live_words)
+        if not rows:
             tree.insert("", "end", values=("", "Nenhum valor no snapshot",
                                            "—", "—", "read-only", "Sem leitura"))
-        for f in fields:
-            actual_value = f["signed"]
-            evidence = evidence_label(f)
-            if index == 15 and manual_live[0] is not None:
-                actual_value = manual_live[0][f["index"]]
+        for row in rows:
             tree.insert("", "end", values=(
-                f"{f['index']:02d}", f.get("name", "field"),
-                actual_value, f.get("unit", "raw"), evidence, source_label,
+                f"{row['index']:02d}", row["name"],
+                row["value_display"], row["unit"], row["evidence"], source_label,
             ))
         refresh_editor_state()
         refresh_chorus_evidence()
@@ -621,7 +638,7 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         assessment = assess_wet_draft(
             draft.get(), manual_live[0][6] if manual_live[0] is not None else None
         )
-        button_read = editing and allow_live and not busy[0] and not locked[0]
+        button_read = can_read_usb and not busy[0] and not locked[0]
         refresh_button.configure(state="normal" if button_read else "disabled")
         entry.configure(state="normal" if enabled else "disabled")
         minus_btn.configure(
@@ -675,6 +692,14 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
                 f"Chorus wet={result.get('wet')} · leitura USB"
                 if code == "READ_OK" else f"Falha de leitura: {code}",
             )
+        elif mode == "read_effect":
+            idx = result.get("index")
+            record_event(
+                "CONSULTA",
+                f"Instância #{idx:02d} · {len(result.get('fields', []))} campos · leitura USB"
+                if code == "EFFECT_READ_OK" and isinstance(idx, int)
+                else f"Falha de leitura: {code}",
+            )
         elif code == "APPLIED_VERIFIED":
             initial = result.get("initial") or []
             before = initial[6] if len(initial) == 7 else "?"
@@ -692,11 +717,12 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
                 values = tuple(result.get("fields", ()))
                 if len(values) == 7 and all(type(v) is int for v in values):
                     manual_live[0] = values
+                    live_effects[15] = values
                     undo_value[0] = None
                     draft.set(str(values[6]))
                     set_status(
                         f"Leitura atual confirmada: Chorus wet={values[6]}. "
-                        "Os demais 58 efeitos continuam vindos do snapshot.",
+                        "Demais efeitos podem ser consultados pelo botão Consultar USB.",
                         GREEN,
                     )
                 else:
@@ -704,6 +730,24 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
                     set_status("Erro: leitura devolveu campos inválidos.", RED)
             else:
                 manual_live[0] = None
+                set_status(
+                    "Leitura USB não confirmada: " + result.get("error", str(result)),
+                    RED,
+                )
+        elif mode == "read_effect":
+            if code == "EFFECT_READ_OK":
+                idx = result.get("index")
+                values = tuple(result.get("fields", ()))
+                if isinstance(idx, int) and values and all(type(v) is int for v in values):
+                    live_effects[idx] = values
+                    set_status(
+                        f"Leitura USB confirmada: {effects[idx - 1]['name']} "
+                        f"({len(values)} campos · somente leitura).",
+                        GREEN,
+                    )
+                else:
+                    set_status("Erro: leitura devolveu campos inválidos.", RED)
+            else:
                 set_status(
                     "Leitura USB não confirmada: " + result.get("error", str(result)),
                     RED,
@@ -768,8 +812,12 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
             pass
         root.after(100, poll)
 
-    def run_operation(mode, target=None, undo=False):
-        if busy[0] or locked[0] or not allow_live:
+    def run_operation(mode, target=None, undo=False, effect_index=None):
+        if busy[0] or locked[0]:
+            return
+        if mode == "apply" and not allow_live:
+            return
+        if mode in ("read", "read_effect") and not can_read_usb:
             return
         expected = manual_live[0] if mode == "apply" else None
         if mode == "apply" and expected is None:
@@ -777,30 +825,37 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
         busy[0] = True
         refresh_editor_state()
         set_status(
-            "Lendo o firmware e a BP1032…" if mode == "read" else
+            "Lendo o firmware e a BP1032…" if mode in ("read", "read_effect") else
             "Aplicando uma alteração USB e verificando o readback…",
             ORANGE,
         )
         record_event(
-            "CONSULTA" if mode == "read" else
+            "CONSULTA" if mode in ("read", "read_effect") else
             ("DESFAZER" if undo else "APLICAR"),
-            "Consulta USB solicitada" if mode == "read" else
+            (
+                f"Consulta USB solicitada (instância #{effect_index:02d})"
+                if mode == "read_effect" and isinstance(effect_index, int)
+                else "Consulta USB solicitada"
+            ) if mode in ("read", "read_effect") else
             f"Pedido de escrita wet {expected[6]} → {target}",
         )
 
         def background():
-            response = run_worker_once(mode, expected=expected, target=target)
+            response = run_worker_once(
+                mode, expected=expected, target=target, effect_index=effect_index
+            )
             response_queue.put((mode, response, undo))
 
         threading.Thread(target=background, name="bpcontrol-hid-worker",
                          daemon=True).start()
 
     def read_clicked():
-        if not allow_live:
+        if not can_read_usb or locked[0]:
             return
-        if locked[0]:
-            return
-        run_operation("read")
+        if selected[0] == 15:
+            run_operation("read")
+        else:
+            run_operation("read_effect", effect_index=selected[0])
 
     def apply_clicked():
         if selected[0] != 15 or manual_live[0] is None or not allow_live:
@@ -904,11 +959,16 @@ def launch_gui(snapshot: dict, *, allow_live: bool, source: Path) -> None:
     root.protocol("WM_DELETE_WINDOW", close)
     filter_list()
     choose_effect(15)
-    record_event("INÍCIO", "M1I aberta · nenhum USB automático")
-    if not allow_live:
+    record_event("INÍCIO", "BPControl aberta · nenhum USB automático")
+    if not can_read_usb:
         set_status(
-            "MODO OFFLINE: nenhuma ação USB disponível. Para habilitar leitura "
-            "manual e Apply limitado: iniciar com --enable-live-writes.", MUTED,
+            "MODO OFFLINE: nenhuma ação USB disponível.", MUTED,
+        )
+    elif not allow_live:
+        set_status(
+            "CONSULTA USB ATIVA (somente leitura): clique em 'Consultar USB (Leitura)' "
+            "para ler qualquer efeito em tempo real. Escrita Chorus wet requer --enable-live-writes.",
+            GREEN,
         )
     elif snapshot.get("source") != "live_windows_hid":
         set_status(
@@ -929,9 +989,16 @@ def main(argv=None) -> int:
         "--enable-live-writes", action="store_true",
         help="enable manual USB read + confirmation-gated Chorus wet ±1 Apply"
     )
+    parser.add_argument(
+        "--offline-only", action="store_true",
+        help="disable even read-only live USB queries"
+    )
     args = parser.parse_args(argv)
+    if args.enable_live_writes and args.offline_only:
+        parser.error("--enable-live-writes cannot be combined with --offline-only")
     if args.enable_live_writes and sys.platform != "win32":
         parser.error("live USB editor is Windows-only")
+    allow_live_reads = (sys.platform == "win32") and not args.offline_only
     path = args.snapshot or (
         DEFAULT_SNAPSHOT if DEFAULT_SNAPSHOT.exists() else DEMO_SNAPSHOT
     )
@@ -944,12 +1011,20 @@ def main(argv=None) -> int:
         parser.error(f"invalid snapshot: {exc}")
     print(f"BPControl M1I — snapshot {path}", flush=True)
     print(
-        "MODE: MANUAL USB CHORUS WET ±1, no flash writes."
-        if args.enable_live_writes else "MODE: OFFLINE / NO USB ACCESS.",
+        "MODE: MANUAL USB CHORUS WET ±1 + LIVE READS, no flash writes."
+        if args.enable_live_writes else (
+            "MODE: LIVE USB READ-ONLY QUERIES (no writes)."
+            if allow_live_reads else "MODE: OFFLINE / NO USB ACCESS."
+        ),
         flush=True,
     )
     try:
-        launch_gui(snapshot, allow_live=args.enable_live_writes, source=path)
+        launch_gui(
+            snapshot,
+            allow_live=args.enable_live_writes,
+            source=path,
+            allow_live_reads=allow_live_reads,
+        )
     except RuntimeError as exc:
         parser.error(str(exc))
     return 0

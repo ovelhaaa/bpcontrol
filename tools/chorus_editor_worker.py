@@ -15,11 +15,45 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 
-def run_action(mode: str, expected_json: str | None, target: int | None) -> dict:
+def run_action(
+    mode: str,
+    expected_json: str | None,
+    target: int | None,
+    effect_index: int | None = None,
+) -> dict:
+    from bpcontrol.acp import effect_command
     from bpcontrol.chorus_editor import (
         ChorusEditorSession, read_editor_chorus, apply_one_editor_step,
         validate_editor_target,
     )
+    from bpcontrol.snapshot import INSTANCE_COUNT
+    from bpcontrol.usb_snapshot import WindowsSnapshotSession
+
+    if mode == "read_effect":
+        if type(effect_index) is not int or not 1 <= effect_index <= INSTANCE_COUNT:
+            raise ValueError("effect_index must be 1..59")
+        with WindowsSnapshotSession() as session:
+            session.authorize_after_firmware(session.query(0x00))
+            cmd = effect_command(effect_index)
+            frame = session.query(cmd)
+            if (
+                frame.command != cmd
+                or frame.payload[:1] != b"\xff"
+                or len(frame.payload) < 3
+                or (len(frame.payload) - 1) % 2 != 0
+            ):
+                raise ValueError(f"Malformed readback payload for effect {effect_index}")
+            raw_words = frame.payload[1:]
+            words = [
+                int.from_bytes(raw_words[i:i + 2], "little", signed=True)
+                for i in range(0, len(raw_words), 2)
+            ]
+            return {
+                "status": "EFFECT_READ_OK",
+                "index": effect_index,
+                "command": f"0x{cmd:02X}",
+                "fields": words,
+            }
 
     # Validate pure input *before* opening the USB collection.
     expected = None
@@ -54,6 +88,8 @@ def main(argv=None) -> int:
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--read", action="store_true",
                        help="one non-mutating live read with firmware validation")
+    modes.add_argument("--read-effect", type=int, metavar="INDEX",
+                       help="one non-mutating live read of any effect instance (1..59)")
     modes.add_argument("--apply", action="store_true",
                        help="one confirmed single-point Chorus wet write")
     parser.add_argument("--expected-fields", type=str,
@@ -70,22 +106,27 @@ def main(argv=None) -> int:
         and args.target is not None
     ):
         parser.error("apply requires --expected-fields, --target, --authorize-one-apply")
-    if args.read and (args.authorize_one_apply or args.expected_fields is not None
-                      or args.target is not None):
+    if (args.read or args.read_effect is not None) and (
+        args.authorize_one_apply or args.expected_fields is not None
+        or args.target is not None
+    ):
         parser.error("read mode rejects write-related flags")
+    if args.read_effect is not None and not 1 <= args.read_effect <= 59:
+        parser.error("--read-effect must be between 1 and 59")
 
+    mode = "apply" if args.apply else ("read_effect" if args.read_effect is not None else "read")
     try:
         response = run_action(
-            "apply" if args.apply else "read", args.expected_fields, args.target
+            mode, args.expected_fields, args.target, effect_index=args.read_effect
         )
     except (ValueError, RuntimeError, OSError) as exc:
         # Exceptions from preflight refuse before mutation; any unexpected
         # transport exception after dispatch must be treated conservatively.
-        response = {"status": "READ_ERROR" if args.read else "STATE_UNCERTAIN",
+        response = {"status": "READ_ERROR" if mode != "apply" else "STATE_UNCERTAIN",
                     "error": f"{type(exc).__name__}: {exc}",
                     "instruction": "If a write may have begun, verify state manually."}
     print(json.dumps(response, ensure_ascii=False, separators=(",", ":")), flush=True)
-    return 0 if response["status"] in ("READ_OK", "APPLIED_VERIFIED") else 4
+    return 0 if response["status"] in ("READ_OK", "EFFECT_READ_OK", "APPLIED_VERIFIED") else 4
 
 
 if __name__ == "__main__":

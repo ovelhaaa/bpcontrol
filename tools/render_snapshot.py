@@ -10,14 +10,34 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import json
 from pathlib import Path
 import sys
 import webbrowser
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from bpcontrol.editor_view_model import present_effect_fields
+
 TEMPLATE = ROOT / "ui" / "snapshot_template.html"
 MARKER = "__BPCONTROL_JSON__"
+
+
+def enrich_snapshot_for_display(snapshot: dict) -> dict:
+    """Return a deep copy enriched with V2.40.0 read-only protocol labels."""
+    enriched = deepcopy(snapshot)
+    for effect in enriched.get("effects", []):
+        fields = effect.get("fields")
+        if not fields:
+            continue
+        presented = present_effect_fields(effect)
+        for field, row in zip(fields, presented):
+            field["protocol_name"] = row["name"]
+            field["protocol_unit"] = row["unit"]
+            field["protocol_formatted"] = row["value_display"]
+            field["protocol_doc"] = row["doc_ref"]
+    return enriched
 
 
 def build_html(snapshot: dict, template_text: str) -> str:
@@ -28,7 +48,8 @@ def build_html(snapshot: dict, template_text: str) -> str:
         raise ValueError("Expected exactly 59 snapshot effect entries")
     if template_text.count(MARKER) != 1:
         raise ValueError("The UI template has no unique snapshot placeholder")
-    json_text = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+    enriched = enrich_snapshot_for_display(snapshot)
+    json_text = json.dumps(enriched, ensure_ascii=False, separators=(",", ":"))
     # Secure insertion in application/json script: no literal tag terminators.
     json_text = json_text.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
     return template_text.replace(MARKER, json_text)

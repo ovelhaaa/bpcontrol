@@ -228,6 +228,24 @@ class M1GEditorTests(unittest.TestCase):
         self.assertIn("--read", argv)
         self.assertNotIn("--authorize-one-apply", argv)
 
+    def test_read_effect_worker_is_read_only_and_validates_index(self):
+        output = subprocess.CompletedProcess(
+            [], 0,
+            json.dumps({"status": "EFFECT_READ_OK", "index": 7, "command": "0x87",
+                        "fields": [1, 67, 110, 2]}),
+            "",
+        )
+        with mock.patch("tools.chorus_editor_gui.subprocess.run",
+                        return_value=output) as run:
+            result = run_worker_once("read_effect", effect_index=7)
+        self.assertEqual(result["status"], "EFFECT_READ_OK")
+        argv = run.call_args.args[0]
+        self.assertIn("--read-effect", argv)
+        self.assertIn("7", argv)
+        self.assertNotIn("--authorize-one-apply", argv)
+        with self.assertRaises(ValueError):
+            run_worker_once("read_effect", effect_index=60)
+
 
 if __name__ == "__main__":
     unittest.main()
