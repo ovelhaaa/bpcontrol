@@ -40,3 +40,16 @@ py tools/probe_exciter_windows.py --live-exciter-probe --field cutoff --expect-v
 
 3. Resultado esperado: `status = "PASS_RESTORED"`, `candidate_ack_valid = true`, `restoration_ack_valid = true`, `restoration_verified = true` e `PASS: single temporary Exciter write was ACKed/read back; all 4 Exciter fields restored and verified.`
 4. Se ocorrer `TIMEOUT` ou `STATE_UNCERTAIN`, **não repita automaticamente**; abra o ACPWorkbench e verifique/restaure manualmente.
+
+## Validação física confirmada (2026-11-24)
+
+O operador executou os três probes na placa física **BP1032** (firmware `0.3.0`, effects library `2.24.0`), todos com **`PASS_RESTORED`**, ACKs válidos e restauração completa dos 4 campos:
+
+| Campo | Baseline | Candidato | Readback candidato | Readback restauração | Resultado |
+|---|---|---|---|---|---|
+| `wet` (3) | `[0, 1000, 100, 100]` | `99` | `[0, 1000, 100, 99]` | `[0, 1000, 100, 100]` | `PASS_RESTORED` |
+| `dry` (2) | `[0, 1000, 100, 100]` | `99` | `[0, 1000, 99, 100]` | `[0, 1000, 100, 100]` | `PASS_RESTORED` |
+| `cutoff` (1) | `[0, 1000, 100, 100]` | `1100` | `[0, 1100, 100, 100]` | `[0, 1000, 100, 100]` | `PASS_RESTORED` |
+
+Nenhum comando de gravação em flash (`0xFD`) foi enviado.
+

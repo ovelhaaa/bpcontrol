@@ -103,10 +103,10 @@ The owner's 2026-11-22 USBPcap analysis confirms vendor HID **MI_04**, EP0 contr
 - [x] Implement offline-only staged Exciter editor prototype (`src/bpcontrol/exciter_editor.py`, `tools/exciter_editor_gui.py`) with `EXCITER_LIVE_WRITE_ENABLED = False`, no USB writes, no continuous sliders, and no flash saves.
 - [x] Operator ran passive USBPcap capture (`--scenario exciter-ack`) and offline analysis (`exciter-01-ack.json`, 2026-11-22): 15 `0x9D` writes (`cutoff`, `dry`, `wet`), 0 invalid packets, `bare_9d_zero_padded` ACKs (~5 ms), ACPWorkbench partial-typing confirmed (`8→80`, `1→10→100`), baseline `[1, 1000, 100, 100]` and `restoration_status = "confirmed"`. Live Exciter writes remain disabled pending M1K-B gate.
 
-## M1K-B — Supervised Exciter (`0x9D`) Windows Probe (offline-tested, physical probe pending)
+## M1K-B — Supervised Exciter (`0x9D`) Windows Probe (physically validated)
 - [x] Implement opt-in Windows probe (`src/bpcontrol/usb_exciter_probe.py`, `tools/probe_exciter_windows.py`) for single-step `cutoff` (±100 Hz in 1000..10000), `dry` (±1 in 0..100), and `wet` (±1 in 0..100) with 4 mandatory flags, double preflight readback, exact `bare_9d_zero_padded` ACK, single restore, 15s watchdog, no retries, and no flash save.
 - [x] Add offline fake-session and CLI regression tests (`tests/test_exciter_probe.py`).
-- [ ] Operator runs supervised physical `probe_exciter_windows.py` on `wet`, `dry`, and `cutoff` and confirms `PASS_RESTORED`. See [M1K_B_EXCITER_PROBE.md](M1K_B_EXCITER_PROBE.md).
+- [x] Operator ran supervised physical `probe_exciter_windows.py` on BP1032 (2026-11-24) for `wet` (`100→99→100`), `dry` (`100→99→100`), and `cutoff` (`1000→1100→1000`); all three returned `PASS_RESTORED` with valid ACKs and full 4-field readback verification. See [M1K_B_EXCITER_PROBE.md](M1K_B_EXCITER_PROBE.md).
 
 ## M2 — UI and resource management
 - [x] First offline read-only snapshot explorer: groups, search, CPU MCPS/RAM, raw signed/u16 parameter cards.

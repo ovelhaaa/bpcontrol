@@ -537,8 +537,11 @@ control; `0x97`, `0x98`, `0x9B`, `0x9D` remain read-only on USB):
 - Physical passive USBPcap capture analyzed (`exciter-01-ack.json`, 2026-11-22):
   15 `0x9D` writes across `cutoff`, `dry`, and `wet` from baseline `[1, 1000, 100, 100]`,
   `bare_9d_zero_padded` ACKs (~5 ms), ACPWorkbench partial-typing behavior observed
-  (`8→80`, `1→10→100`), and `post_restore_readback_confirmed = true`. Live Exciter writes
-  remain disabled.
+  (`8→80`, `1→10→100`), and `post_restore_readback_confirmed = true`.
+- **M1K-B physical probe validated (2026-11-24):** `tools/probe_exciter_windows.py`
+  passed (`PASS_RESTORED`) on the physical BP1032 for `wet` (`100→99→100`),
+  `dry` (`100→99→100`), and `cutoff` (`1000→1100→1000`) with strict ACKs and full
+  4-field restoration readbacks. See [docs/M1K_B_EXCITER_PROBE.md](docs/M1K_B_EXCITER_PROBE.md).
 
 Run the offline prototype (no USB):
 
